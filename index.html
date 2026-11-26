@@ -62,7 +62,8 @@ body{padding-bottom:74px}
 <div style="margin-top:8px"><button class="br" onclick="syncOff()">إيقاف المزامنة على الجهاز ده</button> <button class="sbtn g" onclick="syncClose()">إغلاق</button></div></div>
 </div></div>
 <div class="ov" id="imp"><div class="box"><h3>📷 مراجعة الفاتورة المقروءة من الصورة</h3>
-<div class="head"><div><label>التاريخ</label><input id="i_date"></div></div>
+<div class="head"><div><label>التاريخ</label><input id="i_date"></div><div><label>السابق (من الفاتورة)</label><input id="i_prev" type="number" inputmode="decimal" onchange="IMP.prev=this.value===''?null:num(this.value);impChk()"></div>
+<div><label>المسدد (من الفاتورة)</label><input id="i_paid" type="number" inputmode="decimal" onchange="IMP.paid=this.value===''?null:num(this.value);impChk()"></div><div><label>الرصيد الحالي (من الفاتورة)</label><input id="i_bal" type="number" inputmode="decimal" onchange="IMP.bal=this.value===''?null:num(this.value);impChk()"></div></div>
 <div style="margin-top:8px"><div class="ir" style="font-size:12px;color:#667"><span>الصنف</span><span>الكمية</span><span>السعر</span><span></span></div><div id="i_rows"></div>
 <button class="sbtn g" onclick="impAdd()">+ صف</button></div>
 <div id="i_chk"></div>
@@ -102,7 +103,7 @@ body{padding-bottom:74px}
 <div class="card">إجمالي الفواتير الأصلي<b id="a_all"></b></div>
 <div class="card">المردود بعد الإرجاع (بسعر الأصل)<b id="a_rej" class="neg"></b></div>
 <div class="card">صافي الفواتير<b id="a_net"></b></div>
-<div class="card">المسدد<b id="a_pay"></b></div>
+<div class="card">المسدد (دفعات)<b id="a_pay"></b></div>
 <div class="card bal">الرصيد الحالي<b id="a_bal"></b></div></div>
 <div style="font-size:12px;color:#667;margin:6px 0 10px">الرصيد = السابق + صافي الفواتير - المسدد</div>
 <div class="pay"><div><label>مبلغ مدفوع</label><input id="p_amt" type="number" inputmode="decimal" placeholder="المبلغ"></div>
@@ -235,18 +236,26 @@ function draw(){const c=cur();
 
 draw();
 let IMP=null;
-function impOpen(d){IMP={date:d.date||'',net:d.net,items:(d.items||[]).map(x=>({n:x[0],q:x[1],p:x[2]}))};
- $('i_date').value=IMP.date;impDraw();$('imp').classList.add('on')}
+function impOpen(d){IMP={date:d.date||'',net:d.net,prev:d.prev??null,paid:d.paid??null,bal:d.bal??null,adj:true,items:(d.items||[]).map(x=>({n:x[0],q:x[1],p:x[2]}))};
+ $('i_date').value=IMP.date;$('i_prev').value=IMP.prev??'';$('i_paid').value=IMP.paid??'';$('i_bal').value=IMP.bal??'';impDraw();$('imp').classList.add('on')}
 function impDraw(){$('i_rows').innerHTML=IMP.items.map((x,i)=>`<div class="ir"><input value="${esc(x.n)}" onchange="IMP.items[${i}].n=this.value"><input type="number" value="${esc(x.q)}" onchange="IMP.items[${i}].q=this.value;impChk()"><input type="number" value="${esc(x.p)}" onchange="IMP.items[${i}].p=this.value;impChk()"><button class="sm" onclick="IMP.items.splice(${i},1);impDraw()">🗑</button></div>`).join('');impChk()}
 function impAdd(){IMP.items.push({n:'',q:1,p:''});impDraw()}
-function impChk(){const t=IMP.items.reduce((a,x)=>a+num(x.q)*num(x.p),0);
- $('i_chk').innerHTML=`<div class="${IMP.net==null||Math.abs(t-IMP.net)<0.01?'okm':'warn'}">مجموع الأصناف: <b>${f(t)}</b>${IMP.net!=null?' | صافي الفاتورة في الصورة: <b>'+f(IMP.net)+'</b>'+(Math.abs(t-IMP.net)<0.01?' ✔ مطابق':' ⚠ مش مطابق، راجع الأرقام'):''}</div>`}
+function accBal(){let all=0,rj=0;db.list.forEach(inv=>inv.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;it.mv.forEach(m=>{if(m.t==='r'&&m.done)rj+=num(m.q)*p})}));return num(db.open)+all-rj-db.pay.reduce((a,p)=>a+num(p.amt),0)}
+const firstTime=()=>!db.open&&!db.pay.length&&db.list.every(x=>x.items.every(i=>!i.n&&!i.p&&!i.mv.length));
+function impChk(){const t=IMP.items.reduce((a,x)=>a+num(x.q)*num(x.p),0);let h=`<div class="${IMP.net==null||Math.abs(t-IMP.net)<0.01?'okm':'warn'}">مجموع الأصناف: <b>${f(t)}</b>${IMP.net!=null?' | صافي الفاتورة في الصورة: <b>'+f(IMP.net)+'</b>'+(Math.abs(t-IMP.net)<0.01?' ✔ مطابق':' ⚠ مش مطابق، راجع الأرقام'):''}</div>`;
+ if(IMP.prev!=null){const exp=num(IMP.prev)+t-num(IMP.paid);h+=`<div class="${IMP.bal==null||Math.abs(exp-IMP.bal)<0.01?'okm':'warn'}">السابق ${f(num(IMP.prev))} + الفاتورة ${f(t)} - المسدد ${f(num(IMP.paid))} = <b>${f(exp)}</b>${IMP.bal!=null?' | الرصيد في الصورة: <b>'+f(IMP.bal)+'</b>'+(Math.abs(exp-IMP.bal)<0.01?' ✔ مطابق':' ⚠ مش مطابق'):''}</div>`;
+  if(!firstTime()){const ab=accBal(),df=ab-num(IMP.prev);if(Math.abs(df)>=0.01)h+=`<div class="warn">حسابك في البرنامج قبل الفاتورة دي: <b>${f(ab)}</b> والسابق في الصورة: <b>${f(num(IMP.prev))}</b> (فرق ${f(df)}).<br><label style="display:inline;color:#a31f1f"><input type="checkbox" style="width:auto" ${IMP.adj?'checked':''} onchange="IMP.adj=this.checked"> سجّل الفرق كتسوية عشان الحساب يطابق الفاتورة</label></div>`}
+  else h+=`<div class="okm">أول فاتورة: السابق ${f(num(IMP.prev))} هيتسجل كرصيد أول المدة.</div>`}
+ $('i_chk').innerHTML=h}
 function impCancel(){IMP=null;$('imp').classList.remove('on');history.replaceState(null,'',location.pathname)}
 function impSave(){
  const inv={id:0,date:$('i_date').value||new Date().toLocaleDateString('en-GB'),items:IMP.items.filter(x=>x.n||x.p).map(x=>({n:x.n,q:num(x.q)||1,p:x.p,mv:[]}))};
  if(!inv.items.length)return alert('مفيش أصناف');
- if(db.list.length===1&&db.list[0].items.every(x=>!x.n&&!x.p&&!x.mv.length))db.list=[];
- inv.id=++db.seq;db.list.push(inv);db.cur=db.list.length-1;view='det';scr='inv';save();impCancel();draw()}
+ if(db.list.length===1&&db.list[0].items.every(x=>!x.n&&!x.p&&!x.mv.length)){db.list=[];db.seq=0}
+ inv.id=++db.seq;
+ if(IMP.prev!=null){if(firstTime())db.open=num(IMP.prev);else if(IMP.adj){const df=accBal()-num(IMP.prev);if(Math.abs(df)>=0.01)db.pay.push({amt:df,date:inv.date,note:'تسوية لمطابقة فاتورة '+inv.id})}}
+ if(IMP.paid>0)db.pay.push({amt:num(IMP.paid),date:inv.date,note:'مسدد من فاتورة '+inv.id});
+ inv.pr={prev:IMP.prev,paid:IMP.paid,bal:IMP.bal};db.list.push(inv);db.cur=db.list.length-1;view='det';scr='inv';save();impCancel();draw()}
 function impFromHash(){const m=location.hash.match(/^#import=(.+)$/);if(!m)return;
  try{const b=m[1].replace(/-/g,'+').replace(/_/g,'/');impOpen(JSON.parse(decodeURIComponent(escape(atob(b)))))}catch(e){alert('رابط الاستيراد مش سليم')}}
 window.addEventListener('hashchange',impFromHash);impFromHash();
@@ -285,7 +294,7 @@ async function photoGo(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)r
  const im=c.toDataURL('image/jpeg',0.8).split(',')[1];
  const r=await fetch(SB.replace('/rest/v1/store','/functions/v1/read-invoice'),{method:'POST',headers:H(),body:JSON.stringify({image:im})});
  const d=await r.json();if(!r.ok||!d.items)throw new Error(d.error||'x');
- impOpen({date:d.date,net:d.net,items:d.items.map(x=>[x.n,x.q,x.p])});
+ impOpen({date:d.date,net:d.net,prev:d.prev,paid:d.paid,bal:d.bal,items:d.items.map(x=>[x.n,x.q,x.p!=null?x.p:(x.t!=null&&x.q?x.t/x.q:'')])});
  }catch(e){alert('معرفتش أقرأ الصورة. جرب صورة أوضح أو تأكد من النت.')}
  b.disabled=false;b.textContent='📷 إضافة فاتورة من صورة'}
 </script></body></html>
