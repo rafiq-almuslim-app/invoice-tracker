@@ -2,81 +2,101 @@
 <title>متابعة الفواتير</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,Tahoma,Arial;background:#eef1f5;color:#1b2430}
-header{background:#1f4e79;color:#fff;padding:12px 14px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;align-items:center}
-.wrap{max-width:900px;margin:auto;padding:10px}
-.box{background:#fff;border:2px solid #1f4e79;border-radius:6px;padding:10px;margin-bottom:12px}
+header{background:#1f4e79;color:#fff;padding:12px 14px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.wrap{max-width:820px;margin:auto;padding:10px}
+.box{background:#fff;border:1px solid #c5ceda;border-radius:8px;padding:10px;margin-bottom:12px}
 .head{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-label{font-size:12px;color:#555;display:block}input,select{width:100%;padding:8px;border:1px solid #9aa7b5;border-radius:4px;font-size:15px;background:#fff}
-table{width:100%;border-collapse:collapse;font-size:14px}th{background:#1f4e79;color:#fff;padding:6px;font-size:12px}
-td{border:1px solid #b8c2cc;padding:3px;text-align:center}td input{padding:5px;text-align:center;font-size:14px;min-width:0}
-td.name input{text-align:right}.tbl{overflow-x:auto}
-tr.rej td{background:#fde8e8}tr.rej input:not(.keep){text-decoration:line-through;color:#a33}
-tr.del td{background:#e9f7ec}
-.st{display:flex;gap:3px;justify-content:center}.st button{border:1px solid #888;background:#fff;border-radius:4px;padding:6px 8px;font-size:13px;min-width:44px}
-.st .d.on{background:#2e9e4f;color:#fff;border-color:#2e9e4f}.st .r.on{background:#d33;color:#fff;border-color:#d33}
-.x{color:#d33;font-weight:900;font-size:18px}
-.sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.card{background:#f6f8fb;border-radius:6px;padding:8px;text-align:center}
-.card b{display:block;font-size:20px}.pos{color:#1a8a3c}.neg{color:#c22}
-h3{margin:0 0 8px;font-size:16px}.rejbox{border-color:#d33}.rejbox h3{color:#d33}
-button.b{background:#1f4e79;color:#fff;border:0;padding:9px 14px;border-radius:5px;font-size:14px;margin:3px}button.b.g{background:#777}button.b.red{background:#c22}
-.del-x{background:none;border:0;color:#a00;font-size:18px}
+label{font-size:12px;color:#5a6676;display:block;margin-bottom:2px}
+input,select{width:100%;padding:8px;border:1px solid #9aa7b5;border-radius:5px;font-size:15px;background:#fff;font-family:inherit}
+h3{margin:0 0 8px;font-size:16px}
+.item{border:1px solid #c5ceda;border-radius:8px;padding:8px;margin-bottom:8px;background:#fff}
+.item.done{background:#f3faf5;border-color:#b6dfc1}.item.rejd{background:#fff4f4;border-color:#efb9b9}
+.row{display:grid;grid-template-columns:3fr 1fr 1fr;gap:6px;align-items:end}
+.tot{font-size:13px;color:#445;margin:4px 0}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0}
+.chip{font-size:12px;padding:3px 8px;border-radius:12px;background:#e8edf3}
+.chip.g{background:#d8f0df;color:#14702f}.chip.r{background:#fbdcdc;color:#a31f1f}.chip.s{background:#fff0cc;color:#8a5a00}
+.act{display:grid;grid-template-columns:1fr 1.4fr auto auto;gap:6px;align-items:end;margin-top:6px}
+button{font-family:inherit;cursor:pointer}
+.bd{background:#2e9e4f;color:#fff;border:0;border-radius:5px;padding:9px 12px;font-size:14px}
+.br{background:#d33;color:#fff;border:0;border-radius:5px;padding:9px 12px;font-size:14px}
+.mv{font-size:13px;display:flex;justify-content:space-between;align-items:center;border-top:1px dashed #ccd;padding:4px 0;margin-top:4px}
+.mv.r{color:#a31f1f}.mv.d{color:#14702f}
+.x{color:#d33;font-weight:900}
+.sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.card{background:#f4f7fa;border-radius:6px;padding:8px;text-align:center;font-size:13px}
+.card b{display:block;font-size:20px;margin-top:2px}.pos{color:#1a8a3c}.neg{color:#c22}
+.rejbox{border-color:#e3a1a1}.rejbox h3{color:#c22}.stkbox{border-color:#e6c670}.stkbox h3{color:#8a5a00}
+table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;padding:6px;font-size:12px}td{border-top:1px solid #dde;padding:6px;text-align:center}
+.tb{background:#1f4e79;color:#fff;border:0;padding:9px 12px;border-radius:5px;font-size:14px;margin:3px 0 3px 4px}.tb.g{background:#6b7785}.tb.red{background:#c22}
+.sm{background:none;border:0;color:#a00;font-size:16px}
 @media print{header,.noprint{display:none}}
-@media(max-width:700px){#rows,#rows tr,#rows td{display:block}table thead{display:none}
-#rows tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;border:1px solid #b8c2cc;border-radius:6px;margin-bottom:8px;padding:6px;background:#fff}
-#rows td{border:0!important;width:auto!important;text-align:right;background:none!important}
-#rows td::before{content:attr(data-l);display:block;font-size:11px;color:#667}
-#rows td:nth-child(1),#rows td:nth-child(10){display:none}#rows td.name,#rows td:nth-child(6),#rows td:nth-child(7){grid-column:span 2}
-#rows td:nth-child(10){display:block;grid-column:span 2;text-align:left}#rows td:nth-child(10)::before{display:none}
-#rows td:nth-child(7):empty{display:none}.st button{flex:1;padding:9px}
-}
 </style></head><body>
-<header><span>🧾 متابعة الفواتير</span><span class="noprint"><select id="sel" style="width:auto"></select></span></header>
+<header><span>🧾 متابعة الفواتير</span><span class="noprint"><select id="sel" style="width:auto;max-width:55vw"></select></span></header>
 <div class="wrap">
-<div class="noprint"><button class="b" onclick="newInv()">+ فاتورة جديدة</button><button class="b g" onclick="addRow()">+ إضافة صنف</button><button class="b g" onclick="window.print()">طباعة</button><button class="b red" onclick="delInv()">حذف الفاتورة</button></div>
+<div class="noprint"><button class="tb" onclick="newInv()">+ فاتورة جديدة</button><button class="tb g" onclick="addRow()">+ إضافة صنف</button><button class="tb g" onclick="window.print()">طباعة</button><button class="tb red" onclick="delInv()">حذف الفاتورة</button></div>
 <div class="box"><div class="head">
 <div><label>رقم الفاتورة</label><input id="no"></div><div><label>التاريخ</label><input id="date"></div>
 <div><label>اسم العميل</label><input id="cust"></div><div><label>كود العميل</label><input id="code"></div></div></div>
-<div class="box"><h3>أصناف الفاتورة</h3><div class="tbl"><table><thead><tr><th>م</th><th>الصنف</th><th>الكمية</th><th>السعر الأصلي</th><th>إجمالي الأصل</th><th>الحالة</th><th>المبلغ بتاعي</th><th>الربح</th><th>%</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div id="items"></div>
 <div class="box"><h3>ملخص</h3><div class="sum">
 <div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
-<div class="card">أصل اللي اتسلّم<b id="s_cost"></b></div>
-<div class="card">مبلغي (المسلّم)<b id="s_sell"></b></div>
+<div class="card">أصل المُسلَّم<b id="s_cost"></b></div>
+<div class="card">مبلغي (المُسلَّم)<b id="s_sell"></b></div>
 <div class="card">صافي الربح<b id="s_profit"></b></div>
 <div class="card" style="grid-column:span 2">نسبة الربح<b id="s_pct"></b></div></div></div>
-<div class="box rejbox"><h3>مردود مبيعات (خارج الفاتورة)</h3><div class="tbl"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>إجمالي الأصل</th></tr></thead><tbody id="rej"></tbody></table></div><div style="margin-top:8px">إجمالي المردود: <b id="s_rej"></b></div></div>
+<div class="box stkbox"><h3>مخزن (لسه متسلّمش)</h3><div id="stk"></div></div>
+<div class="box rejbox"><h3>مردود مبيعات (خارج الفاتورة)</h3><div id="rej"></div><div style="margin-top:8px">إجمالي المردود (بسعر الأصل): <b id="s_rej"></b></div></div>
 </div>
 <script>
-const K='invoices_v1',$=id=>document.getElementById(id);
-const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[{n:'',q:1,p:'',st:'',amt:''}]});
+const K='invoices_v2',$=id=>document.getElementById(id);
+const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[newItem()]});
+function newItem(){return{n:'',q:1,p:'',mv:[]}}
 let db=JSON.parse(localStorage.getItem(K)||'null')||{cur:0,list:[blank()]};
 const cur=()=>db.list[db.cur],save=()=>localStorage.setItem(K,JSON.stringify(db));
 const num=v=>parseFloat(v)||0,f=n=>(Math.round(n*100)/100).toLocaleString('en-US');
-function sel(){$('sel').innerHTML=db.list.map((x,i)=>`<option value="${i}">${x.no||'بدون رقم'} - ${x.cust||''}</option>`).join('');$('sel').value=db.cur}
+const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
+const sumQ=(it,t)=>it.mv.filter(m=>m.t===t).reduce((a,m)=>a+num(m.q),0);
+const remain=it=>num(it.q)-sumQ(it,'d')-sumQ(it,'r');
+function selDraw(){$('sel').innerHTML=db.list.map((x,i)=>`<option value="${i}">${esc(x.no)||'بدون رقم'} - ${esc(x.cust)}</option>`).join('');$('sel').value=db.cur}
 $('sel').onchange=e=>{db.cur=+e.target.value;save();draw()};
-['no','date','cust','code'].forEach(k=>$(k).oninput=e=>{cur()[k]=e.target.value;save();sel()});
-function newInv(){db.list.push({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[{n:'',q:1,p:'',st:'',amt:''}]});db.cur=db.list.length-1;save();draw()}
-function delInv(){if(!confirm('تحذف الفاتورة دي؟'))return;db.list.splice(db.cur,1);if(!db.list.length)db.list.push({no:'',date:'',cust:'',code:'',items:[]});db.cur=0;save();draw()}
-function addRow(){cur().items.push({n:'',q:1,p:'',st:'',amt:''});save();draw()}
-function setF(i,k,v){cur().items[i][k]=v;save();calc()}
-function setSt(i,s){const it=cur().items[i];it.st=it.st===s?'':s;save();draw()}
-function rmRow(i){cur().items.splice(i,1);save();draw()}
-function draw(){const c=cur();sel();['no','date','cust','code'].forEach(k=>$(k).value=c[k]||'');
-$('rows').innerHTML=c.items.map((it,i)=>`<tr class="${it.st==='r'?'rej':it.st==='d'?'del':''}" id="r${i}"><td data-l="م">${i+1}</td>
-<td data-l="الصنف" class="name"><input value="${(it.n||'').replace(/"/g,'&quot;')}" oninput="setF(${i},'n',this.value)"></td>
-<td data-l="الكمية" style="width:60px"><input type="number" value="${it.q}" oninput="setF(${i},'q',this.value)"></td>
-<td data-l="السعر الأصلي" style="width:80px"><input type="number" value="${it.p}" oninput="setF(${i},'p',this.value)"></td>
-<td data-l="إجمالي الأصل" id="t${i}"></td>
-<td data-l="الحالة"><div class="st"><button class="d ${it.st==='d'?'on':''}" onclick="setSt(${i},'d')">تم التسليم</button><button class="r ${it.st==='r'?'on':''}" onclick="setSt(${i},'r')">رفض</button></div></td>
-<td data-l="المبلغ بتاعي" style="width:90px" id="a${i}">${it.st==='d'?`<input class="keep" type="number" placeholder="المبلغ" value="${it.amt}" oninput="setF(${i},'amt',this.value)">`:it.st==='r'?'<span class="x">✕</span>':''}</td>
-<td data-l="الربح" id="p${i}"></td><td data-l="نسبة الربح" id="c${i}"></td><td data-l=""><button class="del-x" onclick="rmRow(${i})">🗑</button></td></tr>`).join('');calc()}
-function calc(){const c=cur();let all=0,cost=0,sell=0,rej=0,rr='';
-c.items.forEach((it,i)=>{const t=num(it.q)*num(it.p);all+=t;$('t'+i)&&($('t'+i).textContent=f(t));
-let p='',pc='';if(it.st==='d'&&it.amt!==''){const pr=num(it.amt)-t;p=f(pr);pc=t?f(pr/t*100)+'%':'';sell+=num(it.amt);cost+=t;
-$('p'+i).className=pr>=0?'pos':'neg';$('c'+i).className=pr>=0?'pos':'neg'}else if(it.st==='d'){cost+=t}
-if(it.st==='r'){rej+=t;rr+=`<tr><td>${it.n}</td><td>${it.q}</td><td>${f(t)}</td></tr>`}
-$('p'+i)&&($('p'+i).textContent=p);$('c'+i)&&($('c'+i).textContent=pc)});
-const pf=sell-cost;$('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textContent=f(sell);
-$('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';$('s_pct').textContent=cost?f(pf/cost*100)+'%':'0%';$('s_pct').className=pf>=0?'pos':'neg';
-$('rej').innerHTML=rr||'<tr><td colspan=3>لا يوجد</td></tr>';$('s_rej').textContent=f(rej)}
+['no','date','cust','code'].forEach(k=>$(k).onchange=e=>{cur()[k]=e.target.value;save();selDraw()});
+function newInv(){db.list.push(blank());db.cur=db.list.length-1;save();draw()}
+function delInv(){if(!confirm('تحذف الفاتورة دي؟'))return;db.list.splice(db.cur,1);if(!db.list.length)db.list.push(blank());db.cur=0;save();draw()}
+function addRow(){cur().items.push(newItem());save();draw()}
+function rmRow(i){if(!confirm('تحذف الصنف؟'))return;cur().items.splice(i,1);save();draw()}
+function setF(i,k,v){cur().items[i][k]=v;save();draw()}
+function act(i,t){const it=cur().items[i],rem=remain(it);const q=num($('q'+i).value),a=$('a'+i).value;
+ if(q<=0)return alert('اكتب الكمية');if(q>rem)return alert('الكمية أكبر من المتبقي ('+rem+')');
+ if(t==='d'&&a==='')return alert('اكتب مبلغ التسليم');
+ it.mv.push({t,q,amt:t==='d'?num(a):0});save();draw()}
+function undo(i,j){cur().items[i].mv.splice(j,1);save();draw()}
+function draw(){const c=cur();selDraw();['no','date','cust','code'].forEach(k=>$(k).value=c[k]||'');
+$('items').innerHTML=c.items.map((it,i)=>{const t=num(it.q)*num(it.p),dq=sumQ(it,'d'),rq=sumQ(it,'r'),rem=remain(it);
+ const cls=rem<=0?(dq>0?'done':'rejd'):'';
+ const mv=it.mv.map((m,j)=>{const cost=num(m.q)*num(it.p);
+  return m.t==='d'?`<div class="mv d"><span>✔ تسليم ${m.q} بمبلغ ${f(m.amt)} | ربح ${f(m.amt-cost)} (${cost?f((m.amt-cost)/cost*100):0}%)</span><button class="sm" onclick="undo(${i},${j})">🗑</button></div>`
+  :`<div class="mv r"><span><span class="x">✕</span> رفض ${m.q} (مردود ${f(cost)})</span><button class="sm" onclick="undo(${i},${j})">🗑</button></div>`}).join('');
+ return `<div class="item ${cls}"><div class="row">
+ <div><label>الصنف ${i+1}</label><input value="${esc(it.n)}" onchange="setF(${i},'n',this.value)"></div>
+ <div><label>الكمية</label><input type="number" inputmode="decimal" value="${esc(it.q)}" onchange="setF(${i},'q',this.value)"></div>
+ <div><label>سعر الأصل</label><input type="number" inputmode="decimal" value="${esc(it.p)}" onchange="setF(${i},'p',this.value)"></div></div>
+ <div class="tot">إجمالي الأصل: <b>${f(t)}</b> <button class="sm" onclick="rmRow(${i})" title="حذف الصنف">🗑 حذف الصنف</button></div>
+ <div class="chips"><span class="chip g">اتسلّم ${dq}</span><span class="chip r">${rq?'✕ ':''}مرفوض ${rq}</span><span class="chip s">مخزن ${rem}</span></div>
+ ${rem>0?`<div class="act"><div><label>الكمية</label><input id="q${i}" type="number" inputmode="decimal" value="${rem}"></div>
+ <div><label>مبلغ التسليم (للكمية دي)</label><input id="a${i}" type="number" inputmode="decimal" placeholder="المبلغ"></div>
+ <button class="bd" onclick="act(${i},'d')">تم التسليم</button><button class="br" onclick="act(${i},'r')">رفض</button></div>`:''}
+ ${mv}</div>`}).join('');
+let all=0,cost=0,sell=0,rej=0,rr='',sr='';
+c.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;
+ it.mv.forEach(m=>{if(m.t==='d'){cost+=num(m.q)*p;sell+=num(m.amt)}else rej+=num(m.q)*p});
+ const rq=sumQ(it,'r'),rem=remain(it);
+ if(rq>0)rr+=`<tr><td style="text-align:right">${esc(it.n)}</td><td>${rq}</td><td>${f(rq*p)}</td></tr>`;
+ if(rem>0)sr+=`<tr><td style="text-align:right">${esc(it.n)}</td><td>${rem}</td><td>${f(rem*p)}</td></tr>`});
+const pf=sell-cost;
+$('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textContent=f(sell);
+$('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';
+$('s_pct').textContent=(cost?f(pf/cost*100):0)+'%';$('s_pct').className=pf>=0?'pos':'neg';
+const tb=b=>b?`<table><thead><tr><th>الصنف</th><th>الكمية</th><th>إجمالي الأصل</th></tr></thead><tbody>${b}</tbody></table>`:'<div style="color:#778">لا يوجد</div>';
+$('rej').innerHTML=tb(rr);$('stk').innerHTML=tb(sr);$('s_rej').textContent=f(rej)}
 draw();
 </script></body></html>
