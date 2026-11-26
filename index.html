@@ -36,9 +36,25 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 .ov{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9;overflow:auto;padding:10px;display:none}.ov.on{display:block}
 .ov .box{max-width:820px;margin:auto}.ir{display:grid;grid-template-columns:3fr 1fr 1fr auto;gap:4px;margin-bottom:4px;align-items:center}
 .warn{background:#fdecea;border:1px solid #e3a1a1;color:#a31f1f;padding:6px;border-radius:6px;margin:6px 0;font-size:13px}.okm{background:#e9f7ec;border:1px solid #b6dfc1;color:#14702f;padding:6px;border-radius:6px;margin:6px 0;font-size:13px}
+body{padding-bottom:74px}
+.nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #c5ceda;display:flex;z-index:8;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
+.nav button{flex:1;border:0;background:none;padding:7px 2px 6px;font-size:11px;color:#667;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav button i{font-style:normal;font-size:20px}.nav button.on{color:#1f4e79;font-weight:700;border-top:3px solid #1f4e79;padding-top:4px}
+.scr{display:none}.scr.on{display:block}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
+.tile{border:0;border-radius:14px;padding:18px 8px;color:#fff;text-align:center;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15)}
+.tile i{display:block;font-style:normal;font-size:34px;margin-bottom:6px}.tile small{display:block;font-weight:400;font-size:13px;margin-top:4px;opacity:.95}
+.t1{background:#1f4e79}.t2{background:#c22}.t3{background:#b9770e}.t4{background:#6a3fa0}.t5{background:#2e9e4f}
+.icard{display:block;width:100%;text-align:right;background:#fff;border:1px solid #c5ceda;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:15px}
+.icard small{display:block;color:#667;margin-top:3px;font-size:12px}.icard.fin{background:#f3faf5;border-color:#b6dfc1}
+.big{width:100%;padding:13px;font-size:16px;border:0;border-radius:10px;color:#fff;background:#1f4e79;margin-bottom:8px}.big.g{background:#6b7785}
+.rrow{background:#fff4f4;border:1px solid #efb9b9;border-radius:8px;padding:8px;margin-bottom:6px;color:#a31f1f}
+.drow{background:#f3faf5;border:1px solid #b6dfc1;border-radius:8px;padding:8px;margin-bottom:6px}
+.rrow .l,.drow .l{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.ihd{font-weight:700;margin:12px 0 6px;font-size:14px;color:#345}
 @media print{header,.noprint{display:none}}
 </style></head><body>
-<header><span>🧾 متابعة الفواتير</span><span class="noprint" style="display:flex;gap:6px;align-items:center"><button class="sbtn g" id="photobtn" onclick="photoPick()">📷 صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)"><button class="sbtn" id="cloudbtn" onclick="syncOpen()">☁ مزامنة</button><select id="sel" style="width:auto;max-width:40vw"></select></span></header>
+<header><span id="ttl">🧾 متابعة الفواتير</span><span class="noprint"><button class="sbtn" id="cloudbtn" onclick="syncOpen()">☁ مزامنة</button></span></header>
 <div class="ov" id="syn"><div class="box"><h3>☁ مزامنة بين الأجهزة</h3>
 <div id="syn_off"><p style="font-size:14px;margin:0 0 8px">اكتب كود سري من اختيارك (8 حروف أو أرقام على الأقل). اكتب نفس الكود على أي جهاز تاني وهتشوف نفس البيانات. الكود بيتخزن على جهازك بس، ومحدش يعرف بياناتك من غيره. لو نسيت الكود مش هتقدر تسترجع البيانات من السحابة، فاحفظه.</p>
 <label>الكود السري</label><input id="syn_code" type="password" autocomplete="off"><div style="margin-top:8px"><button class="bd" onclick="syncOn()">تفعيل المزامنة</button> <button class="br" onclick="syncClose()">إغلاق</button></div></div>
@@ -46,14 +62,40 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 <div style="margin-top:8px"><button class="br" onclick="syncOff()">إيقاف المزامنة على الجهاز ده</button> <button class="sbtn g" onclick="syncClose()">إغلاق</button></div></div>
 </div></div>
 <div class="ov" id="imp"><div class="box"><h3>📷 مراجعة الفاتورة المقروءة من الصورة</h3>
-<div class="head"><div><label>رقم الفاتورة</label><input id="i_no"></div><div><label>التاريخ</label><input id="i_date"></div>
-<div><label>اسم العميل</label><input id="i_cust"></div><div><label>كود العميل</label><input id="i_code"></div></div>
+<div class="head"><div><label>التاريخ</label><input id="i_date"></div></div>
 <div style="margin-top:8px"><div class="ir" style="font-size:12px;color:#667"><span>الصنف</span><span>الكمية</span><span>السعر</span><span></span></div><div id="i_rows"></div>
 <button class="sbtn g" onclick="impAdd()">+ صف</button></div>
 <div id="i_chk"></div>
 <div style="margin-top:8px"><button class="bd" onclick="impSave()">حفظ الفاتورة</button> <button class="br" onclick="impCancel()">إلغاء</button></div></div></div>
 <div class="wrap">
-<div class="box acc"><h3>الحساب الكلي (كل الفواتير)</h3>
+<div class="scr" id="s_home"><div class="tiles">
+<button class="tile t1" onclick="go('inv')"><i>🧾</i>الفواتير<small id="h1"></small></button>
+<button class="tile t2" onclick="go('rej')"><i>↩</i>مردود المشتريات<small id="h2"></small></button>
+<button class="tile t3" onclick="go('stk')"><i>📦</i>المخزن<small id="h3"></small></button>
+<button class="tile t4" onclick="go('acc')"><i>💰</i>الحساب<small id="h4"></small></button>
+<button class="tile t5" onclick="go('del')" style="grid-column:span 2"><i>✅</i>تم التسليم<small id="h5"></small></button></div></div>
+
+<div class="scr" id="s_inv">
+<div id="inv_list"><button class="big" id="photobtn" onclick="photoPick()">📷 إضافة فاتورة من صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)">
+<button class="big g" onclick="newInv()">+ فاتورة يدوي</button><div id="invs"></div></div>
+<div id="inv_det" style="display:none">
+<div class="noprint"><button class="tb g" onclick="backList()">← الفواتير</button><button class="tb" onclick="addRow()">+ إضافة صنف</button><button class="tb g" onclick="window.print()">طباعة</button><button class="tb red" onclick="delInv()">حذف الفاتورة</button></div>
+<div class="box"><div class="head">
+<div><label>رقم الفاتورة</label><input id="no" readonly style="background:#eef1f5"></div><div><label>التاريخ</label><input id="date"></div></div></div>
+<div id="items"></div>
+<div class="box"><h3>ملخص الفاتورة</h3><div class="sum">
+<div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
+<div class="card">صافي الفاتورة (بعد المردود)<b id="s_net"></b></div>
+<div class="card">المبلغ الأساسي (للمُسلَّم)<b id="s_cost"></b></div>
+<div class="card">الإجمالي (بعد الربح)<b id="s_sell"></b></div>
+<div class="card">الربح<b id="s_profit"></b></div>
+<div class="card">نسبة الربح %<b id="s_pct"></b></div></div></div></div></div>
+
+<div class="scr" id="s_rej"><div class="box rejbox"><h3>↩ مردود المشتريات</h3><div class="card" style="background:#fbdcdc;color:#a31f1f">إجمالي المردود (بسعر الأصل)<b id="s_rejt"></b></div></div><div id="rej"></div></div>
+
+<div class="scr" id="s_stk"><div class="box stkbox"><h3>📦 المخزن (كل الفواتير، الصنف المتشابه مجمّع)</h3><div id="sug"></div><div id="stk"></div></div></div>
+
+<div class="scr" id="s_acc"><div class="box acc"><h3>💰 الحساب</h3>
 <div class="sum">
 <div class="card">السابق (رصيد أول المدة)<input id="open" type="number" inputmode="decimal" style="margin-top:4px;text-align:center" onchange="db.open=num(this.value);save();draw()"></div>
 <div class="card">مبيعاتي المُسلَّمة (بسعري)<b id="a_inv"></b></div>
@@ -63,22 +105,16 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 <div><label>التاريخ</label><input id="p_date"></div>
 <div class="wide"><label>ملاحظة (اختياري)</label><input id="p_note"></div>
 <button class="bd wide" onclick="addPay()">+ تسجيل دفعة</button></div>
-<div id="pays"></div></div>
-<div class="noprint"><button class="tb" onclick="newInv()">+ فاتورة جديدة</button><button class="tb g" onclick="addRow()">+ إضافة صنف</button><button class="tb g" onclick="window.print()">طباعة</button><button class="tb red" onclick="delInv()">حذف الفاتورة</button></div>
-<div class="box"><div class="head">
-<div><label>رقم الفاتورة</label><input id="no"></div><div><label>التاريخ</label><input id="date"></div>
-<div><label>اسم العميل</label><input id="cust"></div><div><label>كود العميل</label><input id="code"></div></div></div>
-<div id="items"></div>
-<div class="box"><h3>ملخص</h3><div class="sum">
-<div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
-<div class="card">صافي الفاتورة (بعد المردود)<b id="s_net"></b></div>
-<div class="card">المبلغ الأساسي (للمُسلَّم)<b id="s_cost"></b></div>
-<div class="card">الإجمالي (بعد الربح)<b id="s_sell"></b></div>
-<div class="card">الربح<b id="s_profit"></b></div>
-<div class="card" style="grid-column:span 2">نسبة الربح %<b id="s_pct"></b></div></div></div>
-<div class="box stkbox"><h3>مخزن (كل الفواتير، الصنف المتشابه مجمّع)</h3><div id="sug"></div><div id="stk"></div></div>
-<div class="box rejbox"><h3>مردود مشتريات (خارج الفاتورة)</h3><div id="rej"></div><div style="margin-top:8px">إجمالي المردود (بسعر الأصل): <b id="s_rej"></b></div></div>
+<div id="pays"></div></div></div>
+
+<div class="scr" id="s_del"><div class="box"><h3>✅ تم التسليم</h3><div class="sum">
+<div class="card">المبلغ الأساسي<b id="d_cost"></b></div><div class="card">الإجمالي (بعد الربح)<b id="d_sell"></b></div>
+<div class="card">الربح<b id="d_pf"></b></div><div class="card">نسبة الربح %<b id="d_pct"></b></div></div></div><div id="dels"></div></div>
 </div>
+<div class="nav noprint" id="nav">
+<button data-s="home" onclick="go('home')"><i>🏠</i>الرئيسية</button><button data-s="inv" onclick="go('inv')"><i>🧾</i>الفواتير</button>
+<button data-s="rej" onclick="go('rej')"><i>↩</i>مردود</button><button data-s="stk" onclick="go('stk')"><i>📦</i>المخزن</button>
+<button data-s="acc" onclick="go('acc')"><i>💰</i>الحساب</button><button data-s="del" onclick="go('del')"><i>✅</i>تم التسليم</button></div>
 <script>
 const K='invoices_v2',$=id=>document.getElementById(id);
 const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[newItem()]});
@@ -90,48 +126,6 @@ const num=v=>parseFloat(v)||0,f=n=>(Math.round(n*100)/100).toLocaleString('en-US
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const sumQ=(it,t)=>it.mv.filter(m=>m.t===t).reduce((a,m)=>a+num(m.q),0);
 const remain=it=>num(it.q)-sumQ(it,'d')-sumQ(it,'r');
-function selDraw(){$('sel').innerHTML=db.list.map((x,i)=>`<option value="${i}">${esc(x.no)||'بدون رقم'} - ${esc(x.cust)}</option>`).join('');$('sel').value=db.cur}
-$('sel').onchange=e=>{db.cur=+e.target.value;save();draw()};
-['no','date','cust','code'].forEach(k=>$(k).onchange=e=>{cur()[k]=e.target.value;save();selDraw()});
-function newInv(){db.list.push(blank());db.cur=db.list.length-1;save();draw()}
-function delInv(){if(!confirm('تحذف الفاتورة دي؟'))return;db.list.splice(db.cur,1);if(!db.list.length)db.list.push(blank());db.cur=0;save();draw()}
-function addRow(){cur().items.push(newItem());save();draw()}
-function rmRow(i){if(!confirm('تحذف الصنف؟'))return;cur().items.splice(i,1);save();draw()}
-function setF(i,k,v){cur().items[i][k]=v;save();draw()}
-function act(i,t){const it=cur().items[i],rem=remain(it);const q=num($('q'+i).value),a=$('a'+i).value;
- if(q<=0)return alert('اكتب الكمية');if(q>rem)return alert('الكمية أكبر من المتبقي ('+rem+')');
- if(t==='d'&&a==='')return alert('اكتب مبلغ التسليم');
- it.mv.push({t,q,amt:t==='d'?num(a):0});save();draw()}
-function undo(i,j){cur().items[i].mv.splice(j,1);save();draw()}
-function draw(){const c=cur();selDraw();['no','date','cust','code'].forEach(k=>$(k).value=c[k]||'');
-$('items').innerHTML=c.items.map((it,i)=>{const t=num(it.q)*num(it.p),dq=sumQ(it,'d'),rq=sumQ(it,'r'),rem=remain(it);
- const cls=rem<=0?(dq>0?'done':'rejd'):'';
- const mv=it.mv.map((m,j)=>{const cost=num(m.q)*num(it.p);
-  return m.t==='d'?`<div class="mv d"><span>✔ تسليم ${m.q} بمبلغ ${f(m.amt)} | ربح ${f(m.amt-cost)} (${cost?f((m.amt-cost)/cost*100):0}%)</span><button class="sm" onclick="undo(${i},${j})">🗑</button></div>`
-  :`<div class="mv r"><span><span class="x">✕</span> رفض ${m.q} (مردود ${f(cost)})</span><button class="sm" onclick="undo(${i},${j})">🗑</button></div>`}).join('');
- return `<div class="item ${cls}"><div class="row">
- <div><label>الصنف ${i+1}</label><input value="${esc(it.n)}" onchange="setF(${i},'n',this.value)"></div>
- <div><label>الكمية</label><input type="number" inputmode="decimal" value="${esc(it.q)}" onchange="setF(${i},'q',this.value)"></div>
- <div><label>سعر الأصل</label><input type="number" inputmode="decimal" value="${esc(it.p)}" onchange="setF(${i},'p',this.value)"></div></div>
- <div class="tot">إجمالي الأصل: <b>${f(t)}</b> <button class="sm" onclick="rmRow(${i})" title="حذف الصنف">🗑 حذف الصنف</button></div>
- <div class="chips"><span class="chip g">اتسلّم ${dq}</span><span class="chip r">${rq?'✕ ':''}مرفوض ${rq}</span><span class="chip s">مخزن ${rem}</span></div>
- ${rem>0?`<div class="act"><div><label>الكمية</label><input id="q${i}" type="number" inputmode="decimal" value="${rem}"></div>
- <div><label>مبلغ التسليم (للكمية دي)</label><input id="a${i}" type="number" inputmode="decimal" placeholder="المبلغ"></div>
- <button class="bd" onclick="act(${i},'d')">تم التسليم</button><button class="br" onclick="act(${i},'r')">رفض</button></div>`:''}
- ${mv}</div>`}).join('');
-let all=0,cost=0,sell=0,rej=0,rr='',sr='';
-c.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;
- it.mv.forEach(m=>{if(m.t==='d'){cost+=num(m.q)*p;sell+=num(m.amt)}else rej+=num(m.q)*p});
- const rq=sumQ(it,'r'),rem=remain(it);
- if(rq>0)rr+=`<tr><td style="text-align:right">${esc(it.n)}</td><td>${rq}</td><td>${f(rq*p)}</td></tr>`;
- if(rem>0)sr+=`<tr><td style="text-align:right">${esc(it.n)}</td><td>${rem}</td><td>${f(rem*p)}</td></tr>`});
-const pf=sell-cost;
-$('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textContent=f(sell);
-$('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';
-$('s_pct').textContent=(cost?f(pf/cost*100):0)+'%';$('s_pct').className=pf>=0?'pos':'neg';
-const tb=b=>b?`<table><thead><tr><th>الصنف</th><th>الكمية</th><th>إجمالي الأصل</th></tr></thead><tbody>${b}</tbody></table>`:'<div style="color:#778">لا يوجد</div>';
-$('rej').innerHTML=tb(rr);$('s_rej').textContent=f(rej)}
-
 const norm=n=>String(n||'').toLowerCase().replace(/[\s\-_\/]+/g,' ').trim();
 const gk=n=>{const k=norm(n);return db.alias[k]||k};
 const toks=n=>new Set(norm(n).split(' ').filter(Boolean));
@@ -142,7 +136,7 @@ function stockAct(k,t,idx){const g=stockGroups()[k];if(!g)return;const q=num($('
  if(q<=0)return alert('اكتب الكمية');if(q>g.q)return alert('الكمية أكبر من المخزن ('+g.q+')');
  if(t==='d'&&a==='')return alert('اكتب مبلغ التسليم');
  let left=q;g.lines.forEach(L=>{if(left<=0)return;const take=Math.min(left,L.r);left-=take;
-  db.list[L.ii].items[L.i].mv.push({t,q:take,amt:t==='d'?num(a)*take/q:0})});save();draw()}
+  db.list[L.ii].items[L.i].mv.push({t,q:take,amt:t==='d'?num(a)*take/q:0,ts:Date.now()})});save();draw()}
 function merge(a,b){db.alias[b]=a;Object.keys(db.alias).forEach(x=>{if(db.alias[x]===b)db.alias[x]=a});save();draw()}
 function dismiss(a,b){db.no.push(a+'|'+b);save();draw()}
 function addPay(){const a=num($('p_amt').value);if(a<=0)return alert('اكتب المبلغ');
@@ -165,21 +159,80 @@ function drawGlobal(){
   sg+=`<div class="sug">ده نفس الصنف؟<br><b>${esc(g[a].name)}</b> و <b>${esc(g[b].name)}</b><br><button class="sbtn" onclick="merge(decodeURIComponent('${ea}'),decodeURIComponent('${eb}'))">أيوه، اجمعهم</button><button class="sbtn g" onclick="dismiss(decodeURIComponent('${ea}'),decodeURIComponent('${eb}'))">لا</button></div>`}}
  $('sug').innerHTML=sg}
 
-const _draw=draw;draw=function(){_draw();drawGlobal();$('s_net').textContent=f(invNet(cur()))};draw();
 
+
+let scr=localStorage.getItem('scr')||'home',view='list';
+const TT={home:'🧾 متابعة الفواتير',inv:'🧾 الفواتير',rej:'↩ مردود المشتريات',stk:'📦 المخزن',acc:'💰 الحساب',del:'✅ تم التسليم'};
+function go(s){scr=s;if(s==='inv')view='list';localStorage.setItem('scr',s);draw();window.scrollTo(0,0)}
+function openInv(i){db.cur=i;view='det';save();draw();window.scrollTo(0,0)}
+function backList(){view='list';draw()}
+$('date').onchange=e=>{cur().date=e.target.value;save();draw()};function mig(){db.seq=db.seq||0;db.list.forEach(x=>{if(!x.id)x.id=++db.seq})}mig();
+function newInv(){const x=blank();x.id=++db.seq;db.list.push(x);db.cur=db.list.length-1;view='det';save();draw()}
+function delInv(){if(!confirm('تحذف الفاتورة دي؟'))return;db.list.splice(db.cur,1);if(!db.list.length)db.list.push(blank());db.cur=0;view='list';save();draw()}
+function addRow(){cur().items.push(newItem());save();draw()}
+function rmRow(i){if(!confirm('تحذف الصنف؟'))return;cur().items.splice(i,1);save();draw()}
+function setF(i,k,v){cur().items[i][k]=v;save();draw()}
+function act(i,t){const it=cur().items[i],rem=remain(it);const q=num($('q'+i).value),a=$('a'+i).value;
+ if(q<=0)return alert('اكتب الكمية');if(q>rem)return alert('الكمية أكبر من المتبقي ('+rem+')');
+ if(t==='d'&&a==='')return alert('اكتب مبلغ التسليم');
+ it.mv.push({t,q,amt:t==='d'?num(a):0,ts:Date.now()});save();draw()}
+function rejDeliver(ii,i,j,k){const a=$('ra'+k).value;if(a==='')return alert('اكتب مبلغ التسليم');const m=db.list[ii].items[i].mv[j];m.t='d';m.amt=num(a);m.ts=Date.now();save();draw()}
+function undoM(ii,i,j){if(!confirm('تلغي العملية دي وترجّع الصنف للفاتورة؟'))return;db.list[ii].items[i].mv.splice(j,1);save();draw()}
+const allMv=t=>{const o=[];db.list.forEach((inv,ii)=>inv.items.forEach((it,i)=>it.mv.forEach((m,j)=>{if(m.t===t)o.push({inv,ii,it,i,m,j})})));return o};
+const invTitle=inv=>'فاتورة رقم '+inv.id+' | '+esc(inv.date);
+function draw(){const c=cur();
+ document.querySelectorAll('.scr').forEach(e=>e.classList.toggle('on',e.id==='s_'+scr));
+ document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('on',b.dataset.s===scr));$('ttl').textContent=TT[scr];
+ /* invoices */
+ $('inv_list').style.display=view==='list'?'block':'none';$('inv_det').style.display=view==='det'?'block':'none';
+ $('invs').innerHTML=db.list.map((x,i)=>{const pend=x.items.filter(it=>remain(it)>0&&(it.n||it.p)).length;return `<button class="icard ${pend?'':'fin'}" onclick="openInv(${i})"><b>${invTitle(x)}</b><small>${pend?pend+' صنف مفتوح':'كل الأصناف خلصت ✔'}</small></button>`}).reverse().join('');
+ $('no').value=c.id;$('date').value=c.date||'';
+ const pending=c.items.map((it,i)=>({it,i})).filter(o=>remain(o.it)>0);
+ $('items').innerHTML=(pending.length?'':'<div class="okm">كل أصناف الفاتورة دي اتسلّمت أو اترفضت. شوفها في تم التسليم أو مردود المشتريات.</div>')+pending.map(({it,i})=>{const t=num(it.q)*num(it.p),dq=sumQ(it,'d'),rq=sumQ(it,'r'),rem=remain(it);
+ return `<div class="item"><div class="row">
+ <div><label>الصنف ${i+1}</label><input value="${esc(it.n)}" onchange="setF(${i},'n',this.value)"></div>
+ <div><label>الكمية</label><input type="number" inputmode="decimal" value="${esc(it.q)}" onchange="setF(${i},'q',this.value)"></div>
+ <div><label>سعر الأصل</label><input type="number" inputmode="decimal" value="${esc(it.p)}" onchange="setF(${i},'p',this.value)"></div></div>
+ <div class="tot">إجمالي الأصل: <b>${f(t)}</b> <button class="sm" onclick="rmRow(${i})">🗑 حذف الصنف</button></div>
+ ${dq||rq?`<div class="chips"><span class="chip g">اتسلّم ${dq}</span><span class="chip r">${rq?'✕ ':''}مرفوض ${rq}</span><span class="chip s">متبقي (مخزن) ${rem}</span></div>`:''}
+ <div class="act"><div><label>الكمية</label><input id="q${i}" type="number" inputmode="decimal" value="${rem}"></div>
+ <div><label>مبلغ التسليم (للكمية دي)</label><input id="a${i}" type="number" inputmode="decimal" placeholder="المبلغ"></div>
+ <button class="bd" onclick="act(${i},'d')">✓ تم التسليم</button><button class="br" onclick="act(${i},'r')">✕ رفض</button></div></div>`}).join('');
+ let all=0,cost=0,sell=0;
+ c.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;it.mv.forEach(m=>{if(m.t==='d'){cost+=num(m.q)*p;sell+=num(m.amt)}})});
+ const pf=sell-cost;
+ $('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textContent=f(sell);$('s_net').textContent=f(invNet(c));
+ $('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';$('s_pct').textContent=(cost?f(pf/cost*100):0)+'%';$('s_pct').className=pf>=0?'pos':'neg';
+ /* rejected */
+ const R=allMv('r');let rt=0;
+ $('rej').innerHTML=R.length?R.map((o,k)=>{const v=num(o.m.q)*num(o.it.p);rt+=v;return `<div class="rrow"><div class="l"><b>✕ ${esc(o.it.n)}</b><button class="sm" onclick="undoM(${o.ii},${o.i},${o.j})">↩ رجّعه للفاتورة</button></div><div style="font-size:13px">الكمية ${o.m.q} | القيمة ${f(v)} | ${invTitle(o.inv)}</div><div class="act" style="grid-template-columns:1fr auto"><div><label>لو اتسلّم بعد كده: مبلغ التسليم</label><input id="ra${k}" type="number" inputmode="decimal" placeholder="المبلغ"></div><button class="bd" onclick="rejDeliver(${o.ii},${o.i},${o.j},${k})">✓ تم التسليم</button></div></div>`}).join(''):'<div style="color:#778;text-align:center;padding:14px">لا يوجد مردود</div>';
+ $('s_rejt').textContent=f(rt);
+ /* delivered */
+ const D=allMv('d');let dc=0,ds=0;D.forEach(o=>{dc+=num(o.m.q)*num(o.it.p);ds+=num(o.m.amt)});
+ $('d_cost').textContent=f(dc);$('d_sell').textContent=f(ds);$('d_pf').textContent=f(ds-dc);$('d_pf').className=ds-dc>=0?'pos':'neg';$('d_pct').textContent=(dc?f((ds-dc)/dc*100):0)+'%';
+ const byInv={};D.forEach(o=>{(byInv[o.ii]=byInv[o.ii]||[]).push(o)});
+ $('dels').innerHTML=D.length?Object.keys(byInv).reverse().map(ii=>`<div class="ihd">${invTitle(db.list[ii])}</div>`+byInv[ii].map(o=>{const cs=num(o.m.q)*num(o.it.p),pf2=num(o.m.amt)-cs;return `<div class="drow"><div class="l"><b>✔ ${esc(o.it.n)}</b><button class="sm" onclick="undoM(${o.ii},${o.i},${o.j})">↩ إلغاء</button></div><div style="font-size:13px">الكمية ${o.m.q} | الأساسي ${f(cs)} | الإجمالي ${f(o.m.amt)} | الربح <span class="${pf2>=0?'pos':'neg'}">${f(pf2)} (${cs?f(pf2/cs*100):0}%)</span></div></div>`}).join('')).join(''):'<div style="color:#778;text-align:center;padding:14px">لسه ما اتسلمش حاجة</div>';
+ drawGlobal();
+ /* home */
+ const pc=db.list.reduce((a,x)=>a+x.items.filter(it=>remain(it)>0&&(it.n||it.p)).length,0),sk=Object.keys(stockGroups()).length;
+ $('h1').textContent=db.list.filter(x=>x.items.some(i=>i.n||i.p)).length+' فاتورة | '+pc+' صنف مفتوح';$('h2').textContent=R.length?R.length+' صنف | '+f(rt):'لا يوجد';
+ $('h3').textContent=sk+' صنف';$('h5').textContent=D.length?D.length+' عملية | '+f(ds):'لا يوجد';
+ $('h4').textContent='الرصيد '+$('a_bal').textContent}
+
+draw();
 let IMP=null;
-function impOpen(d){IMP={no:d.no||'',date:d.date||'',cust:d.cust||'',code:d.code||'',net:d.net,items:(d.items||[]).map(x=>({n:x[0],q:x[1],p:x[2]}))};
- $('i_no').value=IMP.no;$('i_date').value=IMP.date;$('i_cust').value=IMP.cust;$('i_code').value=IMP.code;impDraw();$('imp').classList.add('on')}
+function impOpen(d){IMP={date:d.date||'',net:d.net,items:(d.items||[]).map(x=>({n:x[0],q:x[1],p:x[2]}))};
+ $('i_date').value=IMP.date;impDraw();$('imp').classList.add('on')}
 function impDraw(){$('i_rows').innerHTML=IMP.items.map((x,i)=>`<div class="ir"><input value="${esc(x.n)}" onchange="IMP.items[${i}].n=this.value"><input type="number" value="${esc(x.q)}" onchange="IMP.items[${i}].q=this.value;impChk()"><input type="number" value="${esc(x.p)}" onchange="IMP.items[${i}].p=this.value;impChk()"><button class="sm" onclick="IMP.items.splice(${i},1);impDraw()">🗑</button></div>`).join('');impChk()}
 function impAdd(){IMP.items.push({n:'',q:1,p:''});impDraw()}
 function impChk(){const t=IMP.items.reduce((a,x)=>a+num(x.q)*num(x.p),0);
  $('i_chk').innerHTML=`<div class="${IMP.net==null||Math.abs(t-IMP.net)<0.01?'okm':'warn'}">مجموع الأصناف: <b>${f(t)}</b>${IMP.net!=null?' | صافي الفاتورة في الصورة: <b>'+f(IMP.net)+'</b>'+(Math.abs(t-IMP.net)<0.01?' ✔ مطابق':' ⚠ مش مطابق، راجع الأرقام'):''}</div>`}
 function impCancel(){IMP=null;$('imp').classList.remove('on');history.replaceState(null,'',location.pathname)}
-function impSave(){const no=$('i_no').value;
- if(db.list.some(x=>x.no&&x.no===no)&&!confirm('فاتورة رقم '+no+' موجودة قبل كده. تضيفها تاني؟'))return;
- const inv={no,date:$('i_date').value,cust:$('i_cust').value,code:$('i_code').value,items:IMP.items.filter(x=>x.n||x.p).map(x=>({n:x.n,q:num(x.q)||1,p:x.p,mv:[]}))};
- if(db.list.length===1&&!db.list[0].no&&!db.list[0].cust&&db.list[0].items.every(x=>!x.n&&!x.p&&!x.mv.length))db.list=[];
- db.list.push(inv);db.cur=db.list.length-1;save();impCancel();draw()}
+function impSave(){
+ const inv={id:0,date:$('i_date').value||new Date().toLocaleDateString('en-GB'),items:IMP.items.filter(x=>x.n||x.p).map(x=>({n:x.n,q:num(x.q)||1,p:x.p,mv:[]}))};
+ if(!inv.items.length)return alert('مفيش أصناف');
+ if(db.list.length===1&&db.list[0].items.every(x=>!x.n&&!x.p&&!x.mv.length))db.list=[];
+ inv.id=++db.seq;db.list.push(inv);db.cur=db.list.length-1;view='det';scr='inv';save();impCancel();draw()}
 function impFromHash(){const m=location.hash.match(/^#import=(.+)$/);if(!m)return;
  try{const b=m[1].replace(/-/g,'+').replace(/_/g,'/');impOpen(JSON.parse(decodeURIComponent(escape(atob(b)))))}catch(e){alert('رابط الاستيراد مش سليم')}}
 window.addEventListener('hashchange',impFromHash);impFromHash();
@@ -188,11 +241,11 @@ const SB='https://upksnnhqvhisrjbbjfal.supabase.co/rest/v1/store',SK='sb_publish
 let sh=localStorage.getItem('sync_hash'),syncT=null,lastOk='',busy=false;
 const H=()=>({apikey:SK,'x-sync-code':sh,'Content-Type':'application/json'});
 async function sha(c){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode('invoice-tracker-v1|'+c));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
-const isEmpty=d=>!d||!d.list||d.list.every(x=>!x.no&&!x.cust&&x.items.every(i=>!i.n&&!i.p&&!(i.mv||[]).length))&&!(d.pay||[]).length&&!d.open;
+const isEmpty=d=>!d||!d.list||d.list.every(x=>x.items.every(i=>!i.n&&!i.p&&!(i.mv||[]).length))&&!(d.pay||[]).length&&!d.open;
 async function getRemote(){const r=await fetch(SB+'?select=data&code=eq.'+sh,{headers:H()});if(!r.ok)throw new Error(r.status);const a=await r.json();return a[0]?a[0].data:null}
 async function putRemote(){const r=await fetch(SB,{method:'POST',headers:{...H(),Prefer:'resolution=merge-duplicates'},body:JSON.stringify({code:sh,data:db,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(r.status)}
 function stat(t,ok){lastOk=t;const b=$('cloudbtn');b.textContent=sh?(ok?'☁ ✔':'☁ ⚠'):'☁ مزامنة';if($('syn_st')){$('syn_st').textContent=t;$('syn_st').className=ok?'okm':'warn'}}
-function applyRemote(d){db=d;db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];if(db.cur>=db.list.length)db.cur=0;save(true);draw()}
+function applyRemote(d){db=d;db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];mig();if(db.cur>=db.list.length)db.cur=0;save(true);draw()}
 async function syncNow(){if(!sh||busy)return;busy=true;try{const r=await getRemote();
   if(r&&(r.ts||0)>(db.ts||0)){applyRemote(r)}else if(!r||(db.ts||0)>(r.ts||0)){await putRemote()}
   stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true)}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false}
@@ -218,7 +271,7 @@ async function photoGo(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)r
  const im=c.toDataURL('image/jpeg',0.8).split(',')[1];
  const r=await fetch(SB.replace('/rest/v1/store','/functions/v1/read-invoice'),{method:'POST',headers:H(),body:JSON.stringify({image:im})});
  const d=await r.json();if(!r.ok||!d.items)throw new Error(d.error||'x');
- impOpen({no:d.no,date:d.date,cust:d.cust,code:d.code,net:d.net,items:d.items.map(x=>[x.n,x.q,x.p])});
+ impOpen({date:d.date,net:d.net,items:d.items.map(x=>[x.n,x.q,x.p])});
  }catch(e){alert('معرفتش أقرأ الصورة. جرب صورة أوضح أو تأكد من النت.')}
- b.disabled=false;b.textContent='📷 صورة'}
+ b.disabled=false;b.textContent='📷 إضافة فاتورة من صورة'}
 </script></body></html>
