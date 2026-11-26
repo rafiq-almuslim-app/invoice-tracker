@@ -76,7 +76,7 @@ body{padding-bottom:74px}
 <button class="tile t5" onclick="go('del')" style="grid-column:span 2"><i>✅</i>تم التسليم<small id="h5"></small></button></div></div>
 
 <div class="scr" id="s_inv">
-<div id="inv_list"><button class="big" id="photobtn" onclick="photoPick()">📷 إضافة فاتورة من صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)">
+<div id="inv_list"><input id="q_s" placeholder="🔎 ابحث عن صنف (اسم)" oninput="srch()" style="margin-bottom:8px;font-size:16px;padding:11px"><div id="srch"></div><button class="big" id="photobtn" onclick="photoPick()">📷 إضافة فاتورة من صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)">
 <button class="big g" onclick="newInv()">+ فاتورة يدوي</button><div id="invs"></div></div>
 <div id="inv_det" style="display:none">
 <div class="noprint"><button class="tb g" onclick="backList()">← الفواتير</button><button class="tb" onclick="addRow()">+ إضافة صنف</button><button class="tb g" onclick="window.print()">طباعة</button><button class="tb red" onclick="delInv()">حذف الفاتورة</button></div>
@@ -96,16 +96,23 @@ body{padding-bottom:74px}
 <div class="scr" id="s_stk"><div class="box stkbox"><h3>📦 المخزن (كل الفواتير، الصنف المتشابه مجمّع)</h3><div id="sug"></div><div id="stk"></div></div></div>
 
 <div class="scr" id="s_acc"><div class="box acc"><h3>💰 الحساب</h3>
+<div class="ihd" style="margin-top:0">أ) الحساب الأصلي (بأسعار الفاتورة، يطابق الفواتير)</div>
 <div class="sum">
 <div class="card">السابق (رصيد أول المدة)<input id="open" type="number" inputmode="decimal" style="margin-top:4px;text-align:center" onchange="db.open=num(this.value);save();draw()"></div>
-<div class="card">مبيعاتي المُسلَّمة (بسعري)<b id="a_inv"></b></div>
+<div class="card">إجمالي الفواتير الأصلي<b id="a_all"></b></div>
+<div class="card">المردود (بسعر الأصل)<b id="a_rej" class="neg"></b></div>
+<div class="card">صافي الفواتير<b id="a_net"></b></div>
 <div class="card">المسدد<b id="a_pay"></b></div>
 <div class="card bal">الرصيد الحالي<b id="a_bal"></b></div></div>
+<div style="font-size:12px;color:#667;margin:6px 0 10px">الرصيد = السابق + صافي الفواتير - المسدد</div>
 <div class="pay"><div><label>مبلغ مدفوع</label><input id="p_amt" type="number" inputmode="decimal" placeholder="المبلغ"></div>
 <div><label>التاريخ</label><input id="p_date"></div>
 <div class="wide"><label>ملاحظة (اختياري)</label><input id="p_note"></div>
 <button class="bd wide" onclick="addPay()">+ تسجيل دفعة</button></div>
-<div id="pays"></div></div></div>
+<div id="pays"></div></div>
+<div class="box"><h3>ب) مبيعاتي والربح (منفصل عن الحساب)</h3><div class="sum">
+<div class="card">مبيعاتي المُسلَّمة (بسعري)<b id="b_sell"></b></div><div class="card">المبلغ الأساسي للمُسلَّم<b id="b_cost"></b></div>
+<div class="card">الربح<b id="b_pf"></b></div><div class="card">نسبة الربح %<b id="b_pct"></b></div></div></div></div>
 
 <div class="scr" id="s_del"><div class="box"><h3>✅ تم التسليم</h3><div class="sum">
 <div class="card">المبلغ الأساسي<b id="d_cost"></b></div><div class="card">الإجمالي (بعد الربح)<b id="d_sell"></b></div>
@@ -144,8 +151,10 @@ function addPay(){const a=num($('p_amt').value);if(a<=0)return alert('اكتب �
 function delPay(i){if(!confirm('تحذف الدفعة؟'))return;db.pay.splice(i,1);save();draw()}
 const invNet=inv=>inv.items.reduce((a,it)=>a+(num(it.q)-sumQ(it,'r'))*num(it.p),0);
 function drawGlobal(){
- const tot=db.list.reduce((a,x)=>a+x.items.reduce((b,it)=>b+it.mv.filter(m=>m.t==='d').reduce((c,m)=>c+num(m.amt),0),0),0),paid=db.pay.reduce((a,p)=>a+num(p.amt),0);
- $('open').value=db.open||'';$('a_inv').textContent=f(tot);$('a_pay').textContent=f(paid);$('a_bal').textContent=f(num(db.open)+tot-paid);
+  let all=0,rj=0,dc=0,ds=0;db.list.forEach(inv=>inv.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;it.mv.forEach(m=>{if(m.t==='r')rj+=num(m.q)*p;else{dc+=num(m.q)*p;ds+=num(m.amt)}})}));
+ const paid=db.pay.reduce((a,p)=>a+num(p.amt),0),net=all-rj,bal=num(db.open)+net-paid;
+ $('open').value=db.open||'';$('a_all').textContent=f(all);$('a_rej').textContent=f(rj);$('a_net').textContent=f(net);$('a_pay').textContent=f(paid);$('a_bal').textContent=f(bal);
+ $('b_sell').textContent=f(ds);$('b_cost').textContent=f(dc);$('b_pf').textContent=f(ds-dc);$('b_pf').className=ds-dc>=0?'pos':'neg';$('b_pct').textContent=(dc?f((ds-dc)/dc*100):0)+'%';
  if(!$('p_date').value)$('p_date').value=new Date().toLocaleDateString('en-GB');
  $('pays').innerHTML=db.pay.map((p,i)=>`<div class="mv"><span>💵 ${f(p.amt)} | ${esc(p.date)} ${esc(p.note)}</span><button class="sm" onclick="delPay(${i})">🗑</button></div>`).join('');
  const g=stockGroups(),keys=Object.keys(g);
@@ -165,6 +174,11 @@ let scr=localStorage.getItem('scr')||'home',view='list';
 const TT={home:'🧾 متابعة الفواتير',inv:'🧾 الفواتير',rej:'↩ مردود المشتريات',stk:'📦 المخزن',acc:'💰 الحساب',del:'✅ تم التسليم'};
 function go(s){scr=s;if(s==='inv')view='list';localStorage.setItem('scr',s);draw();window.scrollTo(0,0)}
 function openInv(i){db.cur=i;view='det';save();draw();window.scrollTo(0,0)}
+function srch(){const q=norm($('q_s').value),o=$('srch');if(!q){o.innerHTML='';return}
+ const rows=[];let tq=0,td=0,tr=0,ts=0;
+ db.list.forEach((inv,ii)=>inv.items.forEach(it=>{if(!norm(it.n).includes(q))return;const dq=sumQ(it,'d'),rq=sumQ(it,'r'),rem=remain(it);tq+=num(it.q);td+=dq;tr+=rq;ts+=rem;
+  rows.push(`<button class="icard" onclick="openInv(${ii})"><b>${esc(it.n)}</b><small>${invTitle(inv)}</small><small>الكمية ${it.q} | السعر ${f(num(it.p))} | تسليم ${dq} | مرفوض ${rq} | مخزن ${rem}</small></button>`)}));
+ o.innerHTML=rows.length?`<div class="okm">${rows.length} نتيجة | إجمالي الكمية ${tq} | اتسلّم ${td} | مرفوض ${tr} | مخزن ${ts}</div>`+rows.join(''):'<div class="warn">مفيش نتيجة</div>'}
 function backList(){view='list';draw()}
 $('date').onchange=e=>{cur().date=e.target.value;save();draw()};function mig(){db.seq=db.seq||0;db.list.forEach(x=>{if(!x.id)x.id=++db.seq})}mig();
 function newInv(){const x=blank();x.id=++db.seq;db.list.push(x);db.cur=db.list.length-1;view='det';save();draw()}
@@ -217,7 +231,7 @@ function draw(){const c=cur();
  const pc=db.list.reduce((a,x)=>a+x.items.filter(it=>remain(it)>0&&(it.n||it.p)).length,0),sk=Object.keys(stockGroups()).length;
  $('h1').textContent=db.list.filter(x=>x.items.some(i=>i.n||i.p)).length+' فاتورة | '+pc+' صنف مفتوح';$('h2').textContent=R.length?R.length+' صنف | '+f(rt):'لا يوجد';
  $('h3').textContent=sk+' صنف';$('h5').textContent=D.length?D.length+' عملية | '+f(ds):'لا يوجد';
- $('h4').textContent='الرصيد '+$('a_bal').textContent}
+ $('h4').textContent='الرصيد '+$('a_bal').textContent;if($('q_s').value)srch()}
 
 draw();
 let IMP=null;
