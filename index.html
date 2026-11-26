@@ -50,7 +50,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 <div class="box acc"><h3>الحساب الكلي (كل الفواتير)</h3>
 <div class="sum">
 <div class="card">السابق (رصيد أول المدة)<input id="open" type="number" inputmode="decimal" style="margin-top:4px;text-align:center" onchange="db.open=num(this.value);save();draw()"></div>
-<div class="card">إجمالي الفواتير (بعد المردود)<b id="a_inv"></b></div>
+<div class="card">مبيعاتي المُسلَّمة (بسعري)<b id="a_inv"></b></div>
 <div class="card">المسدد<b id="a_pay"></b></div>
 <div class="card bal">الرصيد الحالي<b id="a_bal"></b></div></div>
 <div class="pay"><div><label>مبلغ مدفوع</label><input id="p_amt" type="number" inputmode="decimal" placeholder="المبلغ"></div>
@@ -66,12 +66,12 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 <div class="box"><h3>ملخص</h3><div class="sum">
 <div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
 <div class="card">صافي الفاتورة (بعد المردود)<b id="s_net"></b></div>
-<div class="card">أصل المُسلَّم<b id="s_cost"></b></div>
-<div class="card">مبلغي (المُسلَّم)<b id="s_sell"></b></div>
-<div class="card">صافي الربح<b id="s_profit"></b></div>
-<div class="card" style="grid-column:span 2">نسبة الربح<b id="s_pct"></b></div></div></div>
+<div class="card">المبلغ الأساسي (للمُسلَّم)<b id="s_cost"></b></div>
+<div class="card">الإجمالي (بعد الربح)<b id="s_sell"></b></div>
+<div class="card">الربح<b id="s_profit"></b></div>
+<div class="card" style="grid-column:span 2">نسبة الربح %<b id="s_pct"></b></div></div></div>
 <div class="box stkbox"><h3>مخزن (كل الفواتير، الصنف المتشابه مجمّع)</h3><div id="sug"></div><div id="stk"></div></div>
-<div class="box rejbox"><h3>مردود مبيعات (خارج الفاتورة)</h3><div id="rej"></div><div style="margin-top:8px">إجمالي المردود (بسعر الأصل): <b id="s_rej"></b></div></div>
+<div class="box rejbox"><h3>مردود مشتريات (خارج الفاتورة)</h3><div id="rej"></div><div style="margin-top:8px">إجمالي المردود (بسعر الأصل): <b id="s_rej"></b></div></div>
 </div>
 <script>
 const K='invoices_v2',$=id=>document.getElementById(id);
@@ -144,7 +144,7 @@ function addPay(){const a=num($('p_amt').value);if(a<=0)return alert('اكتب �
 function delPay(i){if(!confirm('تحذف الدفعة؟'))return;db.pay.splice(i,1);save();draw()}
 const invNet=inv=>inv.items.reduce((a,it)=>a+(num(it.q)-sumQ(it,'r'))*num(it.p),0);
 function drawGlobal(){
- const tot=db.list.reduce((a,x)=>a+invNet(x),0),paid=db.pay.reduce((a,p)=>a+num(p.amt),0);
+ const tot=db.list.reduce((a,x)=>a+x.items.reduce((b,it)=>b+it.mv.filter(m=>m.t==='d').reduce((c,m)=>c+num(m.amt),0),0),0),paid=db.pay.reduce((a,p)=>a+num(p.amt),0);
  $('open').value=db.open||'';$('a_inv').textContent=f(tot);$('a_pay').textContent=f(paid);$('a_bal').textContent=f(num(db.open)+tot-paid);
  if(!$('p_date').value)$('p_date').value=new Date().toLocaleDateString('en-GB');
  $('pays').innerHTML=db.pay.map((p,i)=>`<div class="mv"><span>💵 ${f(p.amt)} | ${esc(p.date)} ${esc(p.note)}</span><button class="sm" onclick="delPay(${i})">🗑</button></div>`).join('');
