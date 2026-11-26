@@ -38,7 +38,7 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 .warn{background:#fdecea;border:1px solid #e3a1a1;color:#a31f1f;padding:6px;border-radius:6px;margin:6px 0;font-size:13px}.okm{background:#e9f7ec;border:1px solid #b6dfc1;color:#14702f;padding:6px;border-radius:6px;margin:6px 0;font-size:13px}
 @media print{header,.noprint{display:none}}
 </style></head><body>
-<header><span>🧾 متابعة الفواتير</span><span class="noprint" style="display:flex;gap:6px;align-items:center"><button class="sbtn" id="cloudbtn" onclick="syncOpen()">☁ مزامنة</button><select id="sel" style="width:auto;max-width:40vw"></select></span></header>
+<header><span>🧾 متابعة الفواتير</span><span class="noprint" style="display:flex;gap:6px;align-items:center"><button class="sbtn g" id="photobtn" onclick="photoPick()">📷 صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)"><button class="sbtn" id="cloudbtn" onclick="syncOpen()">☁ مزامنة</button><select id="sel" style="width:auto;max-width:40vw"></select></span></header>
 <div class="ov" id="syn"><div class="box"><h3>☁ مزامنة بين الأجهزة</h3>
 <div id="syn_off"><p style="font-size:14px;margin:0 0 8px">اكتب كود سري من اختيارك (8 حروف أو أرقام على الأقل). اكتب نفس الكود على أي جهاز تاني وهتشوف نفس البيانات. الكود بيتخزن على جهازك بس، ومحدش يعرف بياناتك من غيره. لو نسيت الكود مش هتقدر تسترجع البيانات من السحابة، فاحفظه.</p>
 <label>الكود السري</label><input id="syn_code" type="password" autocomplete="off"><div style="margin-top:8px"><button class="bd" onclick="syncOn()">تفعيل المزامنة</button> <button class="br" onclick="syncClose()">إغلاق</button></div></div>
@@ -211,4 +211,14 @@ function exportBk(){const a=document.createElement('a');a.href=URL.createObjectU
 function importBk(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.list)throw 0;if(!confirm('هتستبدل كل البيانات الحالية بالنسخة دي. تكمل؟'))return;db=d;db.cur=0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];db.open=db.open||0;save();draw();alert('تم الاسترجاع')}catch(e){alert('الملف مش نسخة احتياطية سليمة')}inp.value=''};r.readAsText(f)}
 if(sh){stat('جاري المزامنة...',true);syncNow()}
 setInterval(()=>{if(sh&&!document.hidden)syncNow()},15000);document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
+
+function photoPick(){if(!sh){alert('فعّل المزامنة الأول (زرار ☁) عشان قراءة الصور تشتغل.');return}$('photoin').click()}
+async function photoGo(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)return;const b=$('photobtn');b.disabled=true;b.textContent='⏳ بقرأ الصورة...';
+ try{const bm=await createImageBitmap(f);const k=Math.min(1,1600/Math.max(bm.width,bm.height));const c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);
+ const im=c.toDataURL('image/jpeg',0.8).split(',')[1];
+ const r=await fetch(SB.replace('/rest/v1/store','/functions/v1/read-invoice'),{method:'POST',headers:H(),body:JSON.stringify({image:im})});
+ const d=await r.json();if(!r.ok||!d.items)throw new Error(d.error||'x');
+ impOpen({no:d.no,date:d.date,cust:d.cust,code:d.code,net:d.net,items:d.items.map(x=>[x.n,x.q,x.p])});
+ }catch(e){alert('معرفتش أقرأ الصورة. جرب صورة أوضح أو تأكد من النت.')}
+ b.disabled=false;b.textContent='📷 صورة'}
 </script></body></html>
