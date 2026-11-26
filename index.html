@@ -1,0 +1,82 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>متابعة الفواتير</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Tahoma,Arial;background:#eef1f5;color:#1b2430}
+header{background:#1f4e79;color:#fff;padding:12px 14px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;align-items:center}
+.wrap{max-width:900px;margin:auto;padding:10px}
+.box{background:#fff;border:2px solid #1f4e79;border-radius:6px;padding:10px;margin-bottom:12px}
+.head{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+label{font-size:12px;color:#555;display:block}input,select{width:100%;padding:8px;border:1px solid #9aa7b5;border-radius:4px;font-size:15px;background:#fff}
+table{width:100%;border-collapse:collapse;font-size:14px}th{background:#1f4e79;color:#fff;padding:6px;font-size:12px}
+td{border:1px solid #b8c2cc;padding:3px;text-align:center}td input{padding:5px;text-align:center;font-size:14px;min-width:0}
+td.name input{text-align:right}.tbl{overflow-x:auto}
+tr.rej td{background:#fde8e8}tr.rej input:not(.keep){text-decoration:line-through;color:#a33}
+tr.del td{background:#e9f7ec}
+.st{display:flex;gap:3px;justify-content:center}.st button{border:1px solid #888;background:#fff;border-radius:4px;padding:6px 8px;font-size:13px;min-width:44px}
+.st .d.on{background:#2e9e4f;color:#fff;border-color:#2e9e4f}.st .r.on{background:#d33;color:#fff;border-color:#d33}
+.x{color:#d33;font-weight:900;font-size:18px}
+.sum{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}.card{background:#f6f8fb;border-radius:6px;padding:8px;text-align:center}
+.card b{display:block;font-size:20px}.pos{color:#1a8a3c}.neg{color:#c22}
+h3{margin:0 0 8px;font-size:16px}.rejbox{border-color:#d33}.rejbox h3{color:#d33}
+button.b{background:#1f4e79;color:#fff;border:0;padding:9px 14px;border-radius:5px;font-size:14px;margin:3px}button.b.g{background:#777}button.b.red{background:#c22}
+.del-x{background:none;border:0;color:#a00;font-size:18px}
+@media print{header,.noprint{display:none}}
+@media(max-width:700px){#rows,#rows tr,#rows td{display:block}table thead{display:none}
+#rows tr{display:grid;grid-template-columns:1fr 1fr;gap:4px 8px;border:1px solid #b8c2cc;border-radius:6px;margin-bottom:8px;padding:6px;background:#fff}
+#rows td{border:0!important;width:auto!important;text-align:right;background:none!important}
+#rows td::before{content:attr(data-l);display:block;font-size:11px;color:#667}
+#rows td:nth-child(1),#rows td:nth-child(10){display:none}#rows td.name,#rows td:nth-child(6),#rows td:nth-child(7){grid-column:span 2}
+#rows td:nth-child(10){display:block;grid-column:span 2;text-align:left}#rows td:nth-child(10)::before{display:none}
+#rows td:nth-child(7):empty{display:none}.st button{flex:1;padding:9px}
+}
+</style></head><body>
+<header><span>🧾 متابعة الفواتير</span><span class="noprint"><select id="sel" style="width:auto"></select></span></header>
+<div class="wrap">
+<div class="noprint"><button class="b" onclick="newInv()">+ فاتورة جديدة</button><button class="b g" onclick="addRow()">+ إضافة صنف</button><button class="b g" onclick="window.print()">طباعة</button><button class="b red" onclick="delInv()">حذف الفاتورة</button></div>
+<div class="box"><div class="head">
+<div><label>رقم الفاتورة</label><input id="no"></div><div><label>التاريخ</label><input id="date"></div>
+<div><label>اسم العميل</label><input id="cust"></div><div><label>كود العميل</label><input id="code"></div></div></div>
+<div class="box"><h3>أصناف الفاتورة</h3><div class="tbl"><table><thead><tr><th>م</th><th>الصنف</th><th>الكمية</th><th>السعر الأصلي</th><th>إجمالي الأصل</th><th>الحالة</th><th>المبلغ بتاعي</th><th>الربح</th><th>%</th><th></th></tr></thead><tbody id="rows"></tbody></table></div></div>
+<div class="box"><h3>ملخص</h3><div class="sum">
+<div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
+<div class="card">أصل اللي اتسلّم<b id="s_cost"></b></div>
+<div class="card">مبلغي (المسلّم)<b id="s_sell"></b></div>
+<div class="card">صافي الربح<b id="s_profit"></b></div>
+<div class="card" style="grid-column:span 2">نسبة الربح<b id="s_pct"></b></div></div></div>
+<div class="box rejbox"><h3>مردود مبيعات (خارج الفاتورة)</h3><div class="tbl"><table><thead><tr><th>الصنف</th><th>الكمية</th><th>إجمالي الأصل</th></tr></thead><tbody id="rej"></tbody></table></div><div style="margin-top:8px">إجمالي المردود: <b id="s_rej"></b></div></div>
+</div>
+<script>
+const K='invoices_v1',$=id=>document.getElementById(id);
+const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[{n:'',q:1,p:'',st:'',amt:''}]});
+let db=JSON.parse(localStorage.getItem(K)||'null')||{cur:0,list:[blank()]};
+const cur=()=>db.list[db.cur],save=()=>localStorage.setItem(K,JSON.stringify(db));
+const num=v=>parseFloat(v)||0,f=n=>(Math.round(n*100)/100).toLocaleString('en-US');
+function sel(){$('sel').innerHTML=db.list.map((x,i)=>`<option value="${i}">${x.no||'بدون رقم'} - ${x.cust||''}</option>`).join('');$('sel').value=db.cur}
+$('sel').onchange=e=>{db.cur=+e.target.value;save();draw()};
+['no','date','cust','code'].forEach(k=>$(k).oninput=e=>{cur()[k]=e.target.value;save();sel()});
+function newInv(){db.list.push({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[{n:'',q:1,p:'',st:'',amt:''}]});db.cur=db.list.length-1;save();draw()}
+function delInv(){if(!confirm('تحذف الفاتورة دي؟'))return;db.list.splice(db.cur,1);if(!db.list.length)db.list.push({no:'',date:'',cust:'',code:'',items:[]});db.cur=0;save();draw()}
+function addRow(){cur().items.push({n:'',q:1,p:'',st:'',amt:''});save();draw()}
+function setF(i,k,v){cur().items[i][k]=v;save();calc()}
+function setSt(i,s){const it=cur().items[i];it.st=it.st===s?'':s;save();draw()}
+function rmRow(i){cur().items.splice(i,1);save();draw()}
+function draw(){const c=cur();sel();['no','date','cust','code'].forEach(k=>$(k).value=c[k]||'');
+$('rows').innerHTML=c.items.map((it,i)=>`<tr class="${it.st==='r'?'rej':it.st==='d'?'del':''}" id="r${i}"><td data-l="م">${i+1}</td>
+<td data-l="الصنف" class="name"><input value="${(it.n||'').replace(/"/g,'&quot;')}" oninput="setF(${i},'n',this.value)"></td>
+<td data-l="الكمية" style="width:60px"><input type="number" value="${it.q}" oninput="setF(${i},'q',this.value)"></td>
+<td data-l="السعر الأصلي" style="width:80px"><input type="number" value="${it.p}" oninput="setF(${i},'p',this.value)"></td>
+<td data-l="إجمالي الأصل" id="t${i}"></td>
+<td data-l="الحالة"><div class="st"><button class="d ${it.st==='d'?'on':''}" onclick="setSt(${i},'d')">تم التسليم</button><button class="r ${it.st==='r'?'on':''}" onclick="setSt(${i},'r')">رفض</button></div></td>
+<td data-l="المبلغ بتاعي" style="width:90px" id="a${i}">${it.st==='d'?`<input class="keep" type="number" placeholder="المبلغ" value="${it.amt}" oninput="setF(${i},'amt',this.value)">`:it.st==='r'?'<span class="x">✕</span>':''}</td>
+<td data-l="الربح" id="p${i}"></td><td data-l="نسبة الربح" id="c${i}"></td><td data-l=""><button class="del-x" onclick="rmRow(${i})">🗑</button></td></tr>`).join('');calc()}
+function calc(){const c=cur();let all=0,cost=0,sell=0,rej=0,rr='';
+c.items.forEach((it,i)=>{const t=num(it.q)*num(it.p);all+=t;$('t'+i)&&($('t'+i).textContent=f(t));
+let p='',pc='';if(it.st==='d'&&it.amt!==''){const pr=num(it.amt)-t;p=f(pr);pc=t?f(pr/t*100)+'%':'';sell+=num(it.amt);cost+=t;
+$('p'+i).className=pr>=0?'pos':'neg';$('c'+i).className=pr>=0?'pos':'neg'}else if(it.st==='d'){cost+=t}
+if(it.st==='r'){rej+=t;rr+=`<tr><td>${it.n}</td><td>${it.q}</td><td>${f(t)}</td></tr>`}
+$('p'+i)&&($('p'+i).textContent=p);$('c'+i)&&($('c'+i).textContent=pc)});
+const pf=sell-cost;$('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textContent=f(sell);
+$('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';$('s_pct').textContent=cost?f(pf/cost*100)+'%':'0%';$('s_pct').className=pf>=0?'pos':'neg';
+$('rej').innerHTML=rr||'<tr><td colspan=3>لا يوجد</td></tr>';$('s_rej').textContent=f(rej)}
+draw();
+</script></body></html>
