@@ -85,7 +85,7 @@ body{padding-bottom:74px}
 <div id="items"></div>
 <div class="box"><h3>ملخص الفاتورة</h3><div class="sum">
 <div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
-<div class="card">صافي الفاتورة (بعد المردود)<b id="s_net"></b></div>
+<div class="card">صافي الفاتورة (بعد خصم المردود)<b id="s_net"></b></div>
 <div class="card">المبلغ الأساسي (للمُسلَّم)<b id="s_cost"></b></div>
 <div class="card">الإجمالي (بعد الربح)<b id="s_sell"></b></div>
 <div class="card">الربح<b id="s_profit"></b></div>
@@ -176,7 +176,7 @@ function act(i,t){const it=cur().items[i],rem=remain(it);const q=num($('q'+i).va
  if(q<=0)return alert('اكتب الكمية');if(q>rem)return alert('الكمية أكبر من المتبقي ('+rem+')');
  if(t==='d'&&a==='')return alert('اكتب مبلغ التسليم');
  it.mv.push({t,q,amt:t==='d'?num(a):0,ts:Date.now()});save();draw()}
-function rejDeliver(ii,i,j,k){const a=$('ra'+k).value;if(a==='')return alert('اكتب مبلغ التسليم');const m=db.list[ii].items[i].mv[j];m.t='d';m.amt=num(a);m.ts=Date.now();save();draw()}
+function rejDone(ii,i,j){if(!confirm('الصنف ده اترجع فعلاً؟ هيختفي من البرنامج وقيمته بتتخصم من الفاتورة.'))return;db.list[ii].items[i].mv[j].done=1;save();draw()}
 function undoM(ii,i,j){if(!confirm('تلغي العملية دي وترجّع الصنف للفاتورة؟'))return;db.list[ii].items[i].mv.splice(j,1);save();draw()}
 const allMv=t=>{const o=[];db.list.forEach((inv,ii)=>inv.items.forEach((it,i)=>it.mv.forEach((m,j)=>{if(m.t===t)o.push({inv,ii,it,i,m,j})})));return o};
 const invTitle=inv=>'فاتورة رقم '+inv.id+' | '+esc(inv.date);
@@ -204,8 +204,8 @@ function draw(){const c=cur();
  $('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textContent=f(sell);$('s_net').textContent=f(invNet(c));
  $('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';$('s_pct').textContent=(cost?f(pf/cost*100):0)+'%';$('s_pct').className=pf>=0?'pos':'neg';
  /* rejected */
- const R=allMv('r');let rt=0;
- $('rej').innerHTML=R.length?R.map((o,k)=>{const v=num(o.m.q)*num(o.it.p);rt+=v;return `<div class="rrow"><div class="l"><b>✕ ${esc(o.it.n)}</b><button class="sm" onclick="undoM(${o.ii},${o.i},${o.j})">↩ رجّعه للفاتورة</button></div><div style="font-size:13px">الكمية ${o.m.q} | القيمة ${f(v)} | ${invTitle(o.inv)}</div><div class="act" style="grid-template-columns:1fr auto"><div><label>لو اتسلّم بعد كده: مبلغ التسليم</label><input id="ra${k}" type="number" inputmode="decimal" placeholder="المبلغ"></div><button class="bd" onclick="rejDeliver(${o.ii},${o.i},${o.j},${k})">✓ تم التسليم</button></div></div>`}).join(''):'<div style="color:#778;text-align:center;padding:14px">لا يوجد مردود</div>';
+ const R=allMv('r').filter(o=>!o.m.done);let rt=0;
+ $('rej').innerHTML=R.length?R.map((o,k)=>{const v=num(o.m.q)*num(o.it.p);rt+=v;return `<div class="rrow"><div class="l"><b>✕ ${esc(o.it.n)}</b><button class="sm" onclick="undoM(${o.ii},${o.i},${o.j})">↩ رجّعه للفاتورة</button></div><div style="font-size:13px">الكمية ${o.m.q} | القيمة ${f(v)} | ${invTitle(o.inv)}</div><div style="margin-top:6px"><button class="bd" onclick="rejDone(${o.ii},${o.i},${o.j})">✓ تم الإرجاع</button></div></div>`}).join(''):'<div style="color:#778;text-align:center;padding:14px">لا يوجد مردود</div>';
  $('s_rejt').textContent=f(rt);
  /* delivered */
  const D=allMv('d');let dc=0,ds=0;D.forEach(o=>{dc+=num(o.m.q)*num(o.it.p);ds+=num(o.m.amt)});
