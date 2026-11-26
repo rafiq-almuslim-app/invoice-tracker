@@ -85,7 +85,7 @@ body{padding-bottom:74px}
 <div id="items"></div>
 <div class="box"><h3>ملخص الفاتورة</h3><div class="sum">
 <div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
-<div class="card">صافي الفاتورة (بعد خصم المردود)<b id="s_net"></b></div>
+<div class="card">صافي الفاتورة (بعد خصم المردود اللي اترجع)<b id="s_net"></b></div>
 <div class="card">المبلغ الأساسي (للمُسلَّم)<b id="s_cost"></b></div>
 <div class="card">الإجمالي (بعد الربح)<b id="s_sell"></b></div>
 <div class="card">الربح<b id="s_profit"></b></div>
@@ -100,7 +100,7 @@ body{padding-bottom:74px}
 <div class="sum">
 <div class="card">السابق (رصيد أول المدة)<input id="open" type="number" inputmode="decimal" style="margin-top:4px;text-align:center" onchange="db.open=num(this.value);save();draw()"></div>
 <div class="card">إجمالي الفواتير الأصلي<b id="a_all"></b></div>
-<div class="card">المردود (بسعر الأصل)<b id="a_rej" class="neg"></b></div>
+<div class="card">المردود بعد الإرجاع (بسعر الأصل)<b id="a_rej" class="neg"></b></div>
 <div class="card">صافي الفواتير<b id="a_net"></b></div>
 <div class="card">المسدد<b id="a_pay"></b></div>
 <div class="card bal">الرصيد الحالي<b id="a_bal"></b></div></div>
@@ -149,9 +149,9 @@ function dismiss(a,b){db.no.push(a+'|'+b);save();draw()}
 function addPay(){const a=num($('p_amt').value);if(a<=0)return alert('اكتب المبلغ');
  db.pay.push({amt:a,date:$('p_date').value,note:$('p_note').value});save();draw()}
 function delPay(i){if(!confirm('تحذف الدفعة؟'))return;db.pay.splice(i,1);save();draw()}
-const invNet=inv=>inv.items.reduce((a,it)=>a+(num(it.q)-sumQ(it,'r'))*num(it.p),0);
+const invNet=inv=>inv.items.reduce((a,it)=>a+(num(it.q)-it.mv.filter(m=>m.t==='r'&&m.done).reduce((x,m)=>x+num(m.q),0))*num(it.p),0);
 function drawGlobal(){
-  let all=0,rj=0,dc=0,ds=0;db.list.forEach(inv=>inv.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;it.mv.forEach(m=>{if(m.t==='r')rj+=num(m.q)*p;else{dc+=num(m.q)*p;ds+=num(m.amt)}})}));
+  let all=0,rj=0,dc=0,ds=0;db.list.forEach(inv=>inv.items.forEach(it=>{const p=num(it.p);all+=num(it.q)*p;it.mv.forEach(m=>{if(m.t==='r'){if(m.done)rj+=num(m.q)*p}else{dc+=num(m.q)*p;ds+=num(m.amt)}})}));
  const paid=db.pay.reduce((a,p)=>a+num(p.amt),0),net=all-rj,bal=num(db.open)+net-paid;
  $('open').value=db.open||'';$('a_all').textContent=f(all);$('a_rej').textContent=f(rj);$('a_net').textContent=f(net);$('a_pay').textContent=f(paid);$('a_bal').textContent=f(bal);
  $('b_sell').textContent=f(ds);$('b_cost').textContent=f(dc);$('b_pf').textContent=f(ds-dc);$('b_pf').className=ds-dc>=0?'pos':'neg';$('b_pct').textContent=(dc?f((ds-dc)/dc*100):0)+'%';
