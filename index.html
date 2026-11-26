@@ -29,10 +29,25 @@ button{font-family:inherit;cursor:pointer}
 table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;padding:6px;font-size:12px}td{border-top:1px solid #dde;padding:6px;text-align:center}
 .tb{background:#1f4e79;color:#fff;border:0;padding:9px 12px;border-radius:5px;font-size:14px;margin:3px 0 3px 4px}.tb.g{background:#6b7785}.tb.red{background:#c22}
 .sm{background:none;border:0;color:#a00;font-size:16px}
+.acc{border:2px solid #1f4e79}.acc .sum{grid-template-columns:repeat(2,1fr)}.bal{background:#1f4e79!important;color:#fff}
+.pay{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:8px}.pay .wide{grid-column:span 2}
+.sug{background:#fff8e1;border:1px solid #e6c670;border-radius:6px;padding:6px;margin:6px 0;font-size:13px}.sug button{margin:2px}
+.sbtn{border:0;border-radius:5px;padding:6px 10px;background:#1f4e79;color:#fff;font-size:13px}.sbtn.g{background:#6b7785}
 @media print{header,.noprint{display:none}}
 </style></head><body>
 <header><span>🧾 متابعة الفواتير</span><span class="noprint"><select id="sel" style="width:auto;max-width:55vw"></select></span></header>
 <div class="wrap">
+<div class="box acc"><h3>الحساب الكلي (كل الفواتير)</h3>
+<div class="sum">
+<div class="card">السابق (رصيد أول المدة)<input id="open" type="number" inputmode="decimal" style="margin-top:4px;text-align:center" onchange="db.open=num(this.value);save();draw()"></div>
+<div class="card">إجمالي الفواتير (بعد المردود)<b id="a_inv"></b></div>
+<div class="card">المسدد<b id="a_pay"></b></div>
+<div class="card bal">الرصيد الحالي<b id="a_bal"></b></div></div>
+<div class="pay"><div><label>مبلغ مدفوع</label><input id="p_amt" type="number" inputmode="decimal" placeholder="المبلغ"></div>
+<div><label>التاريخ</label><input id="p_date"></div>
+<div class="wide"><label>ملاحظة (اختياري)</label><input id="p_note"></div>
+<button class="bd wide" onclick="addPay()">+ تسجيل دفعة</button></div>
+<div id="pays"></div></div>
 <div class="noprint"><button class="tb" onclick="newInv()">+ فاتورة جديدة</button><button class="tb g" onclick="addRow()">+ إضافة صنف</button><button class="tb g" onclick="window.print()">طباعة</button><button class="tb red" onclick="delInv()">حذف الفاتورة</button></div>
 <div class="box"><div class="head">
 <div><label>رقم الفاتورة</label><input id="no"></div><div><label>التاريخ</label><input id="date"></div>
@@ -40,11 +55,12 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 <div id="items"></div>
 <div class="box"><h3>ملخص</h3><div class="sum">
 <div class="card">إجمالي الفاتورة الأصلي<b id="s_all"></b></div>
+<div class="card">صافي الفاتورة (بعد المردود)<b id="s_net"></b></div>
 <div class="card">أصل المُسلَّم<b id="s_cost"></b></div>
 <div class="card">مبلغي (المُسلَّم)<b id="s_sell"></b></div>
 <div class="card">صافي الربح<b id="s_profit"></b></div>
 <div class="card" style="grid-column:span 2">نسبة الربح<b id="s_pct"></b></div></div></div>
-<div class="box stkbox"><h3>مخزن (لسه متسلّمش)</h3><div id="stk"></div></div>
+<div class="box stkbox"><h3>مخزن (كل الفواتير، الصنف المتشابه مجمّع)</h3><div id="sug"></div><div id="stk"></div></div>
 <div class="box rejbox"><h3>مردود مبيعات (خارج الفاتورة)</h3><div id="rej"></div><div style="margin-top:8px">إجمالي المردود (بسعر الأصل): <b id="s_rej"></b></div></div>
 </div>
 <script>
@@ -52,6 +68,7 @@ const K='invoices_v2',$=id=>document.getElementById(id);
 const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[newItem()]});
 function newItem(){return{n:'',q:1,p:'',mv:[]}}
 let db=JSON.parse(localStorage.getItem(K)||'null')||{cur:0,list:[blank()]};
+db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];
 const cur=()=>db.list[db.cur],save=()=>localStorage.setItem(K,JSON.stringify(db));
 const num=v=>parseFloat(v)||0,f=n=>(Math.round(n*100)/100).toLocaleString('en-US');
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
@@ -97,6 +114,40 @@ $('s_all').textContent=f(all);$('s_cost').textContent=f(cost);$('s_sell').textCo
 $('s_profit').textContent=f(pf);$('s_profit').className=pf>=0?'pos':'neg';
 $('s_pct').textContent=(cost?f(pf/cost*100):0)+'%';$('s_pct').className=pf>=0?'pos':'neg';
 const tb=b=>b?`<table><thead><tr><th>الصنف</th><th>الكمية</th><th>إجمالي الأصل</th></tr></thead><tbody>${b}</tbody></table>`:'<div style="color:#778">لا يوجد</div>';
-$('rej').innerHTML=tb(rr);$('stk').innerHTML=tb(sr);$('s_rej').textContent=f(rej)}
-draw();
+$('rej').innerHTML=tb(rr);$('s_rej').textContent=f(rej)}
+
+const norm=n=>String(n||'').toLowerCase().replace(/[\s\-_\/]+/g,' ').trim();
+const gk=n=>{const k=norm(n);return db.alias[k]||k};
+const toks=n=>new Set(norm(n).split(' ').filter(Boolean));
+function near(a,b){if(a===b)return false;const A=toks(a),B=toks(b);if(!A.size||!B.size)return false;
+ let i=0;A.forEach(t=>{if(B.has(t))i++});const u=A.size+B.size-i;return i/u>=0.6||a.includes(b)||b.includes(a)}
+function stockGroups(){const g={};db.list.forEach((inv,ii)=>inv.items.forEach((it,i)=>{const r=remain(it);if(r>0&&norm(it.n)){const k=gk(it.n);(g[k]=g[k]||{name:it.n,lines:[],q:0});g[k].lines.push({ii,i,r});g[k].q+=r}}));return g}
+function stockAct(k,t,idx){const g=stockGroups()[k];if(!g)return;const q=num($('sq'+idx).value),a=$('sa'+idx).value;
+ if(q<=0)return alert('اكتب الكمية');if(q>g.q)return alert('الكمية أكبر من المخزن ('+g.q+')');
+ if(t==='d'&&a==='')return alert('اكتب مبلغ التسليم');
+ let left=q;g.lines.forEach(L=>{if(left<=0)return;const take=Math.min(left,L.r);left-=take;
+  db.list[L.ii].items[L.i].mv.push({t,q:take,amt:t==='d'?num(a)*take/q:0})});save();draw()}
+function merge(a,b){db.alias[b]=a;Object.keys(db.alias).forEach(x=>{if(db.alias[x]===b)db.alias[x]=a});save();draw()}
+function dismiss(a,b){db.no.push(a+'|'+b);save();draw()}
+function addPay(){const a=num($('p_amt').value);if(a<=0)return alert('اكتب المبلغ');
+ db.pay.push({amt:a,date:$('p_date').value,note:$('p_note').value});save();draw()}
+function delPay(i){if(!confirm('تحذف الدفعة؟'))return;db.pay.splice(i,1);save();draw()}
+const invNet=inv=>inv.items.reduce((a,it)=>a+(num(it.q)-sumQ(it,'r'))*num(it.p),0);
+function drawGlobal(){
+ const tot=db.list.reduce((a,x)=>a+invNet(x),0),paid=db.pay.reduce((a,p)=>a+num(p.amt),0);
+ $('open').value=db.open||'';$('a_inv').textContent=f(tot);$('a_pay').textContent=f(paid);$('a_bal').textContent=f(num(db.open)+tot-paid);
+ if(!$('p_date').value)$('p_date').value=new Date().toLocaleDateString('en-GB');
+ $('pays').innerHTML=db.pay.map((p,i)=>`<div class="mv"><span>💵 ${f(p.amt)} | ${esc(p.date)} ${esc(p.note)}</span><button class="sm" onclick="delPay(${i})">🗑</button></div>`).join('');
+ const g=stockGroups(),keys=Object.keys(g);
+ $('stk').innerHTML=keys.length?keys.map((k,idx)=>`<div class="item"><b>${esc(g[k].name)}</b> <span class="chip s">مخزن ${g[k].q}</span>
+  <div style="font-size:12px;color:#667;margin-top:2px">من فواتير: ${[...new Set(g[k].lines.map(L=>db.list[L.ii].no||'بدون رقم'))].join('، ')}</div>
+  <div class="act"><div><label>الكمية</label><input id="sq${idx}" type="number" inputmode="decimal" value="${g[k].q}"></div>
+  <div><label>مبلغ التسليم (للكمية دي)</label><input id="sa${idx}" type="number" inputmode="decimal" placeholder="المبلغ"></div>
+  <button class="bd" onclick="stockAct(decodeURIComponent('${encodeURIComponent(k)}'),'d',${idx})">تم التسليم</button><button class="br" onclick="stockAct(decodeURIComponent('${encodeURIComponent(k)}'),'r',${idx})">رفض</button></div></div>`).join(''):'<div style="color:#778">لا يوجد</div>';
+ let sg='';for(let x=0;x<keys.length;x++)for(let y=x+1;y<keys.length;y++){const a=keys[x],b=keys[y];
+  if(!db.no.includes(a+'|'+b)&&near(a,b)){const ea=encodeURIComponent(a),eb=encodeURIComponent(b);
+  sg+=`<div class="sug">ده نفس الصنف؟<br><b>${esc(g[a].name)}</b> و <b>${esc(g[b].name)}</b><br><button class="sbtn" onclick="merge(decodeURIComponent('${ea}'),decodeURIComponent('${eb}'))">أيوه، اجمعهم</button><button class="sbtn g" onclick="dismiss(decodeURIComponent('${ea}'),decodeURIComponent('${eb}'))">لا</button></div>`}}
+ $('sug').innerHTML=sg}
+
+const _draw=draw;draw=function(){_draw();drawGlobal();$('s_net').textContent=f(invNet(cur()))};draw();
 </script></body></html>
