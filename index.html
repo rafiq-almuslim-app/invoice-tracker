@@ -267,6 +267,7 @@ window.addEventListener('hashchange',impFromHash);impFromHash();
 
 /*CORE*/
 const rid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+const sj=x=>JSON.stringify(x,(k,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.keys(v).sort().reduce((r,q)=>(r[q]=v[q],r),{}):v);
 const hashS=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(h>>>0).toString(36)};
 const blankInv=v=>v.items.every(x=>!x.n&&!x.p&&!(x.mv||[]).length)&&!v.pr;
 function uidsOf(d){const s=[];d.list.forEach(v=>{s.push(v.u);v.items.forEach(i=>{s.push(i.u);(i.mv||[]).forEach(m=>s.push(m.u))})});d.pay.forEach(p=>s.push(p.u));d.rep.forEach(r=>s.push(r.id));return s.filter(Boolean)}
@@ -274,8 +275,8 @@ function stamp(d,track){
  const now=Date.now();d.pay=d.pay||[];d.rep=d.rep||[];d.del=d.del||{};
  const empty=d.list.every(blankInv)&&!d.pay.length&&!d.open;
  const legacy=!d.v&&!empty,t0=legacy?(d.ts||0):now;
- const sc=(o,skip)=>{const x={};for(const k in o)if(!skip.includes(k))x[k]=o[k];const h=hashS(JSON.stringify(x));if(o._h!==h){o._h=h;o.mt=(o._h===undefined?t0:now);}};
- const sc2=(o,skip)=>{const x={};for(const k in o)if(!skip.includes(k))x[k]=o[k];const h=hashS(JSON.stringify(x));if(o._h===undefined){o._h=h;o.mt=t0}else if(o._h!==h){o._h=h;o.mt=now}};
+ const sc=(o,skip)=>{const x={};for(const k in o)if(!skip.includes(k))x[k]=o[k];const h=hashS(sj(x));if(o._h!==h){o._h=h;o.mt=(o._h===undefined?t0:now);}};
+ const sc2=(o,skip)=>{const x={};for(const k in o)if(!skip.includes(k))x[k]=o[k];const h=hashS(sj(x));if(o._h===undefined){o._h=h;o.mt=t0}else if(o._h!==h){o._h=h;o.mt=now}};
  d.list.forEach(v=>{if(!v.u)v.u=legacy?'L'+v.id:'i'+rid();sc2(v,['items','u','mt','_h']);
   v.items.forEach((it,ix)=>{if(!it.u)it.u=legacy?v.u+'#'+ix:'t'+rid();sc2(it,['mv','u','mt','_h']);
    (it.mv=it.mv||[]).forEach(m=>{if(!m.u)m.u=legacy?it.u+'m'+m.ts+m.t+m.q:'m'+rid();sc2(m,['u','mt','_h'])})})});
