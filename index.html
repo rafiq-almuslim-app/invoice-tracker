@@ -1,5 +1,5 @@
 <!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>متابعة الفواتير</title>
+<title>مكة لخدمات المحمول</title>
 <style>
 *{box-sizing:border-box}body{margin:0;font-family:system-ui,Tahoma,Arial;background:#eef1f5;color:#1b2430}
 header{background:#1f4e79;color:#fff;padding:12px 14px;font-weight:700;font-size:18px;display:flex;justify-content:space-between;align-items:center;gap:8px}
@@ -54,7 +54,7 @@ body{padding-bottom:74px}
 .ihd{font-weight:700;margin:12px 0 6px;font-size:14px;color:#345}
 @media print{header,.noprint{display:none}}
 </style></head><body>
-<header><span id="ttl">🧾 متابعة الفواتير</span><span class="noprint"><button class="sbtn" id="cloudbtn" onclick="syncOpen()">☁ مزامنة</button></span></header>
+<header><span id="ttl">📱 مكة لخدمات المحمول</span><span class="noprint"><button class="sbtn" id="cloudbtn" onclick="syncOpen()">☁ مزامنة</button></span></header>
 <div class="ov" id="syn"><div class="box"><h3>☁ مزامنة بين الأجهزة</h3>
 <div id="syn_off"><p style="font-size:14px;margin:0 0 8px">اكتب كود سري من اختيارك (8 حروف أو أرقام على الأقل). اكتب نفس الكود على أي جهاز تاني وهتشوف نفس البيانات. الكود بيتخزن على جهازك بس، ومحدش يعرف بياناتك من غيره. لو نسيت الكود مش هتقدر تسترجع البيانات من السحابة، فاحفظه.</p>
 <label>الكود السري</label><input id="syn_code" type="password" autocomplete="off"><div style="margin-top:8px"><button class="bd" onclick="syncOn()">تفعيل المزامنة</button> <button class="br" onclick="syncClose()">إغلاق</button></div></div>
@@ -176,7 +176,7 @@ function drawGlobal(){
 
 
 let scr=localStorage.getItem('scr')||'home',view='list';
-const TT={home:'🧾 متابعة الفواتير',inv:'🧾 الفواتير',rej:'↩ مردود المشتريات',stk:'📦 المخزن',acc:'💰 الحساب',del:'✅ تم التسليم',rep:'🔧 صيانة'};
+const TT={home:"📱 مكة لخدمات المحمول",inv:'🧾 الفواتير',rej:'↩ مردود المشتريات',stk:'📦 المخزن',acc:'💰 الحساب',del:'✅ تم التسليم',rep:'🔧 صيانة'};
 function go(s){scr=s;if(s==='inv')view='list';localStorage.setItem('scr',s);draw();window.scrollTo(0,0)}
 function openInv(i){db.cur=i;view='det';save();draw();window.scrollTo(0,0)}
 function srch(){const q=norm($('q_s').value),o=$('srch');if(!q){o.innerHTML='';return}
