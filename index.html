@@ -133,7 +133,7 @@ const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code
 function newItem(){return{n:'',q:1,p:'',mv:[]}}
 let db=JSON.parse(localStorage.getItem(K)||'null')||{cur:0,list:[blank()]};
 db.open=db.open||0;db.rep=db.rep||[];db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];
-const cur=()=>db.list[db.cur],save=(remote)=>{if(!remote)db.ts=Date.now();localStorage.setItem(K,JSON.stringify(db));if(!remote)syncSoon()};
+const cur=()=>db.list[db.cur],save=(remote)=>{if(!remote){db.ts=Date.now();stamp(db,true)};localStorage.setItem(K,JSON.stringify(db));if(!remote)syncSoon()};
 const num=v=>parseFloat(v)||0,f=n=>(Math.round(n*100)/100).toLocaleString('en-US');
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
 const sumQ=(it,t)=>it.mv.filter(m=>m.t===t).reduce((a,m)=>a+num(m.q),0);
@@ -254,6 +254,8 @@ function impCancel(){IMP=null;$('imp').classList.remove('on');history.replaceSta
 function impSave(){
  const inv={id:0,date:$('i_date').value||new Date().toLocaleDateString('en-GB'),items:IMP.items.filter(x=>x.n||x.p).map(x=>({n:x.n,q:num(x.q)||1,p:x.p,mv:[]}))};
  if(!inv.items.length)return alert('مفيش أصناف');
+ const sig=x=>x.items.map(i=>norm(i.n)+'|'+num(i.q)+'|'+num(i.p)).join(';');
+ if(db.list.some(v=>v.date===inv.date&&sig(v)===sig(inv))&&!confirm('الفاتورة دي متسجلة قبل كده بنفس الأصناف والتاريخ. تضيفها تاني؟'))return;
  if(db.list.length===1&&db.list[0].items.every(x=>!x.n&&!x.p&&!x.mv.length)){db.list=[];db.seq=0}
  inv.id=++db.seq;
  if(IMP.prev!=null){if(firstTime())db.open=num(IMP.prev);else if(IMP.adj){const df=accBal()-num(IMP.prev);if(Math.abs(df)>=0.01)db.pay.push({amt:df,date:inv.date,note:'تسوية لمطابقة فاتورة '+inv.id})}}
@@ -263,6 +265,49 @@ function impFromHash(){const m=location.hash.match(/^#import=(.+)$/);if(!m)retur
  try{const b=m[1].replace(/-/g,'+').replace(/_/g,'/');impOpen(JSON.parse(decodeURIComponent(escape(atob(b)))))}catch(e){alert('رابط الاستيراد مش سليم')}}
 window.addEventListener('hashchange',impFromHash);impFromHash();
 
+/*CORE*/
+const rid=()=>Math.random().toString(36).slice(2,8)+Date.now().toString(36).slice(-4);
+const hashS=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return(h>>>0).toString(36)};
+const blankInv=v=>v.items.every(x=>!x.n&&!x.p&&!(x.mv||[]).length)&&!v.pr;
+function uidsOf(d){const s=[];d.list.forEach(v=>{s.push(v.u);v.items.forEach(i=>{s.push(i.u);(i.mv||[]).forEach(m=>s.push(m.u))})});d.pay.forEach(p=>s.push(p.u));d.rep.forEach(r=>s.push(r.id));return s.filter(Boolean)}
+function stamp(d,track){
+ const now=Date.now();d.pay=d.pay||[];d.rep=d.rep||[];d.del=d.del||{};
+ const empty=d.list.every(blankInv)&&!d.pay.length&&!d.open;
+ const legacy=!d.v&&!empty,t0=legacy?(d.ts||0):now;
+ const sc=(o,skip)=>{const x={};for(const k in o)if(!skip.includes(k))x[k]=o[k];const h=hashS(JSON.stringify(x));if(o._h!==h){o._h=h;o.mt=(o._h===undefined?t0:now);}};
+ const sc2=(o,skip)=>{const x={};for(const k in o)if(!skip.includes(k))x[k]=o[k];const h=hashS(JSON.stringify(x));if(o._h===undefined){o._h=h;o.mt=t0}else if(o._h!==h){o._h=h;o.mt=now}};
+ d.list.forEach(v=>{if(!v.u)v.u=legacy?'L'+v.id:'i'+rid();sc2(v,['items','u','mt','_h']);
+  v.items.forEach((it,ix)=>{if(!it.u)it.u=legacy?v.u+'#'+ix:'t'+rid();sc2(it,['mv','u','mt','_h']);
+   (it.mv=it.mv||[]).forEach(m=>{if(!m.u)m.u=legacy?it.u+'m'+m.ts+m.t+m.q:'m'+rid();sc2(m,['u','mt','_h'])})})});
+ const occ={};d.pay.forEach(p=>{if(!p.u){const k='p'+p.amt+'|'+p.date+'|'+p.note;occ[k]=(occ[k]||0)+1;p.u=legacy?k+'#'+occ[k]:'p'+rid()}sc2(p,['u','mt','_h'])});
+ d.rep.forEach(r=>{sc2(r,['id','ts','mt','_h','smt','nmt','_s','_n']);if(r._s===undefined){r._s=r.st;r.smt=t0}else if(r._s!==r.st){r._s=r.st;r.smt=now}if(r._n===undefined){r._n=r.note;r.nmt=t0}else if(r._n!==r.note){r._n=r.note;r.nmt=now}});
+ if(d._oh===undefined){d._oh=String(d.open||0);d.omt=t0}else if(d._oh!==String(d.open||0)){d._oh=String(d.open||0);d.omt=now}
+ d.v=1;
+ if(track){const prev=JSON.parse(localStorage.getItem('prevU')||'[]'),cur=new Set(uidsOf(d));prev.forEach(u=>{if(!cur.has(u)&&!d.del[u])d.del[u]=now});localStorage.setItem('prevU',JSON.stringify([...cur]))}
+ return d}
+function mergeDb(a,b){
+ const del={};[a.del||{},b.del||{}].forEach(o=>{for(const k in o)del[k]=Math.max(del[k]||0,o[k])});
+ const pick=(x,y)=>((y.mt||0)>(x.mt||0))?y:x;
+ const byU=(xs,ys,key,fn)=>{const m=new Map();(xs||[]).forEach(x=>m.set(x[key],x));(ys||[]).forEach(y=>{const x=m.get(y[key]);m.set(y[key],x?fn(x,y):y)});return[...m.values()].filter(e=>!del[e[key]])};
+ const mvm=(x,y)=>{const w={...pick(x,y)};if(x.done||y.done)w.done=true;return w};
+ const itm=(x,y)=>{const w={...pick(x,y)};w.mv=byU(x.mv,y.mv,'u',mvm);return w};
+ const inv=(x,y)=>{const w={...pick(x,y)};w.items=byU(x.items,y.items,'u',itm);return w};
+ const repm=(x,y)=>{const w={...pick(x,y)};const ys=(y.smt||0)>(x.smt||0),yn=(y.nmt||0)>(x.nmt||0);w.st=ys?y.st:x.st;w.smt=ys?y.smt:x.smt;w._s=w.st;w.note=yn?y.note:x.note;w.nmt=yn?y.nmt:x.nmt;w._n=w.note;return w};
+ const curU=(a.list[a.cur]||{}).u;
+ let list=byU(a.list,b.list,'u',inv);
+ if(list.length>1)list=list.filter(v=>!blankInv(v));
+ if(!list.length)list=[{id:0,date:a.list[0]?a.list[0].date:'',items:[{n:'',q:1,p:'',mv:[]}]}];
+ list.sort((x,y)=>(x.id-y.id)||String(x.u).localeCompare(String(y.u)));
+ const o={...a};
+ o.list=list;o.pay=byU(a.pay,b.pay,'u',pick);o.rep=byU(a.rep,b.rep,'id',repm).sort((x,y)=>(y.ts-x.ts)||String(x.id).localeCompare(String(y.id)));
+ if((b.omt||0)>(a.omt||0)){o.open=b.open;o.omt=b.omt;o._oh=b._oh}
+ o.alias={...(b.alias||{}),...(a.alias||{})};o.no=[...new Set([...(b.no||[]),...(a.no||[])])];
+ o.seq=Math.max(a.seq||0,b.seq||0,...list.map(v=>v.id||0));o.del=del;o.v=1;o.ts=Math.max(a.ts||0,b.ts||0);
+ const ci=list.findIndex(v=>v.u===curU);o.cur=ci>=0?ci:0;
+ return o}
+function canon(d){const s=x=>Array.isArray(x)?x.map(s).sort((p,q)=>JSON.stringify(p)<JSON.stringify(q)?-1:1):(x&&typeof x==='object'?Object.keys(x).sort().reduce((r,k)=>(k==='cur'||k==='ts')?r:(r[k]=s(x[k]),r),{}):x);return JSON.stringify(s(d))}
+/*ENDCORE*/
+
 const SB='https://upksnnhqvhisrjbbjfal.supabase.co/rest/v1/store',SK='sb_publishable_-MWorEtwOua4HH28lgESNQ_hJnF-Ery';
 let sh=localStorage.getItem('sync_hash'),syncT=null,lastOk='',busy=false;
 const H=()=>({apikey:SK,'x-sync-code':sh,'Content-Type':'application/json'});
@@ -271,17 +316,21 @@ const isEmpty=d=>!d||!d.list||d.list.every(x=>x.items.every(i=>!i.n&&!i.p&&!(i.m
 async function getRemote(){const r=await fetch(SB+'?select=data&code=eq.'+sh,{headers:H()});if(!r.ok)throw new Error(r.status);const a=await r.json();return a[0]?a[0].data:null}
 async function putRemote(){const r=await fetch(SB,{method:'POST',headers:{...H(),Prefer:'resolution=merge-duplicates'},body:JSON.stringify({code:sh,data:db,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(r.status)}
 function stat(t,ok){lastOk=t;const b=$('cloudbtn');b.textContent=sh?(ok?'☁ ✔':'☁ ⚠'):'☁ مزامنة';if($('syn_st')){$('syn_st').textContent=t;$('syn_st').className=ok?'okm':'warn'}}
-function applyRemote(d){db=d;db.rep=db.rep||[];db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];mig();if(db.cur>=db.list.length)db.cur=0;save(true);draw()}
-async function syncNow(){if(!sh||busy)return;busy=true;try{const r=await getRemote();
-  if(r&&(r.ts||0)>(db.ts||0)){applyRemote(r)}else if(!r||(db.ts||0)>(r.ts||0)){await putRemote()}
-  stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true);photoSync()}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false}
+function applyRemote(d){db=d;db.rep=db.rep||[];db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];mig();if(db.cur>=db.list.length)db.cur=0;stamp(db,false);localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw()}
+let again=false;
+async function syncNow(){if(!sh)return;if(busy){again=true;return}busy=true;try{const r=await getRemote();
+  mig();stamp(db,true);
+  if(!r){await putRemote()}else{const rr=stamp(r,false),m=mergeDb(db,rr),c=canon(m);
+   if(c!==canon(db)){db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw()}
+   if(c!==canon(r)){await putRemote()}}
+  stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true);photoSync()}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false;if(again){again=false;setTimeout(syncNow,300)}}
 function syncSoon(){if(!sh)return;clearTimeout(syncT);syncT=setTimeout(syncNow,1200)}
 function syncOpen(){$('syn').classList.add('on');$('syn_off').style.display=sh?'none':'block';$('syn_on').style.display=sh?'block':'none';if(sh)stat(lastOk||'المزامنة شغالة',!lastOk.includes('مفيش'))}
 function syncClose(){$('syn').classList.remove('on')}
 async function syncOn(){const c=$('syn_code').value;if(c.length<8)return alert('الكود لازم 8 حروف أو أرقام على الأقل');
  const h=await sha(c);const old=sh;sh=h;
  try{const r=await getRemote();
-  if(r){if(!isEmpty(db)&&!confirm('فيه بيانات على السحابة بالكود ده. هتستبدل البيانات الموجودة على الجهاز ده بيها. تكمل؟')){sh=old;return}applyRemote(r)}
+  if(r){if(isEmpty(db)){applyRemote(r)}else{mig();stamp(db,true);const m=mergeDb(db,stamp(r,false));db=m;mig();save(true);draw();await putRemote()}}
   else{if(isEmpty(db)&&!confirm('الكود ده جديد ومفيش عليه بيانات. لو ده جهاز تاني وكتبت الكود غلط، اضغط إلغاء وراجع الكود. أول مرة فعلاً؟')){sh=old;return}await putRemote()}
   localStorage.setItem('sync_hash',sh);$('syn_code').value='';stat('المزامنة اشتغلت ✔ '+new Date().toLocaleTimeString('en-GB'),true);syncOpen()}
  catch(e){sh=old;alert('مقدرتش أوصل للسحابة. جرب تاني.')}}
@@ -289,7 +338,7 @@ function syncOff(){if(!confirm('توقف المزامنة على الجهاز د
 async function exportBk(){const ph=await pAll();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...db,_photos:ph})],{type:'application/json'}));a.download='invoices-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 function importBk(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!d.list)throw 0;if(!confirm('هتستبدل كل البيانات الحالية بالنسخة دي. تكمل؟'))return;const ph=d._photos||{};delete d._photos;for(const k in ph){await pPut(k,ph[k]);qset('ph_up',[...qget('ph_up'),k])}db=d;db.rep=db.rep||[];db.cur=0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];db.open=db.open||0;save();draw();alert('تم الاسترجاع')}catch(e){alert('الملف مش نسخة احتياطية سليمة')}inp.value=''};r.readAsText(f)}
 if(sh){stat('جاري المزامنة...',true);syncNow()}
-setInterval(()=>{if(sh&&!document.hidden)syncNow()},15000);document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
+setInterval(()=>{if(sh&&!document.hidden)syncNow()},15000);window.addEventListener('online',()=>{if(sh)syncNow()});window.addEventListener('focus',()=>{if(sh)syncNow()});document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
 
 /* ===== صيانة ===== */
 var repF='all',repK=localStorage.getItem('repK')||'t';const KN={t:'تاتش',b:'زراير'};function repK_(k){repK=k;localStorage.setItem('repK',k);repF='all';draw()}
