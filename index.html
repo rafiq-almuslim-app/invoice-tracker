@@ -38,13 +38,13 @@ table{width:100%;border-collapse:collapse;font-size:14px}th{background:#eef1f5;p
 .warn{background:#fdecea;border:1px solid #e3a1a1;color:#a31f1f;padding:6px;border-radius:6px;margin:6px 0;font-size:13px}.okm{background:#e9f7ec;border:1px solid #b6dfc1;color:#14702f;padding:6px;border-radius:6px;margin:6px 0;font-size:13px}
 body{padding-bottom:74px}
 .nav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #c5ceda;display:flex;z-index:8;box-shadow:0 -2px 8px rgba(0,0,0,.08)}
-.nav button{flex:1;border:0;background:none;padding:7px 2px 6px;font-size:11px;color:#667;display:flex;flex-direction:column;align-items:center;gap:2px}
+.nav button{flex:1;min-width:0;border:0;background:none;padding:7px 2px 6px;font-size:10px;color:#667;display:flex;flex-direction:column;align-items:center;gap:2px}
 .nav button i{font-style:normal;font-size:20px}.nav button.on{color:#1f4e79;font-weight:700;border-top:3px solid #1f4e79;padding-top:4px}
 .scr{display:none}.scr.on{display:block}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:6px}
 .tile{border:0;border-radius:14px;padding:18px 8px;color:#fff;text-align:center;font-size:17px;font-weight:700;box-shadow:0 2px 6px rgba(0,0,0,.15)}
 .tile i{display:block;font-style:normal;font-size:34px;margin-bottom:6px}.tile small{display:block;font-weight:400;font-size:13px;margin-top:4px;opacity:.95}
-.t1{background:#1f4e79}.t2{background:#c22}.t3{background:#b9770e}.t4{background:#6a3fa0}.t5{background:#2e9e4f}
+.t1{background:#1f4e79}.t2{background:#c22}.t3{background:#b9770e}.t4{background:#6a3fa0}.t5{background:#2e9e4f}.t6{background:#0e7c86}
 .icard{display:block;width:100%;text-align:right;background:#fff;border:1px solid #c5ceda;border-radius:10px;padding:10px 12px;margin-bottom:8px;font-size:15px}
 .icard small{display:block;color:#667;margin-top:3px;font-size:12px}.icard.fin{background:#f3faf5;border-color:#b6dfc1}
 .big{width:100%;padding:13px;font-size:16px;border:0;border-radius:10px;color:#fff;background:#1f4e79;margin-bottom:8px}.big.g{background:#6b7785}
@@ -74,7 +74,8 @@ body{padding-bottom:74px}
 <button class="tile t2" onclick="go('rej')"><i>↩</i>مردود المشتريات<small id="h2"></small></button>
 <button class="tile t3" onclick="go('stk')"><i>📦</i>المخزن<small id="h3"></small></button>
 <button class="tile t4" onclick="go('acc')"><i>💰</i>الحساب<small id="h4"></small></button>
-<button class="tile t5" onclick="go('del')" style="grid-column:span 2"><i>✅</i>تم التسليم<small id="h5"></small></button></div></div>
+<button class="tile t5" onclick="go('del')"><i>✅</i>تم التسليم<small id="h5"></small></button>
+<button class="tile t6" onclick="go('rep')"><i>🔧</i>صيانة<small id="h6"></small></button></div></div>
 
 <div class="scr" id="s_inv">
 <div id="inv_list"><input id="q_s" placeholder="🔎 ابحث عن صنف (اسم)" oninput="srch()" style="margin-bottom:8px;font-size:16px;padding:11px"><div id="srch"></div><button class="big" id="photobtn" onclick="photoPick()">📷 إضافة فاتورة من صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)">
@@ -118,17 +119,19 @@ body{padding-bottom:74px}
 <div class="scr" id="s_del"><div class="box"><h3>✅ تم التسليم</h3><div class="sum">
 <div class="card">المبلغ الأساسي<b id="d_cost"></b></div><div class="card">الإجمالي (بعد الربح)<b id="d_sell"></b></div>
 <div class="card">الربح<b id="d_pf"></b></div><div class="card">نسبة الربح %<b id="d_pct"></b></div></div></div><div id="dels"></div></div>
+<div class="scr" id="s_rep"><div class="chips" id="repk" style="margin-bottom:8px"></div><button class="big" id="repadd" onclick="$('repin').click()">📷 إضافة صورة</button><input type="file" id="repin" accept="image/*" style="display:none" onchange="repAdd(this)">
+<div class="chips" id="repf"></div><div id="reps"></div></div>
 </div>
 <div class="nav noprint" id="nav">
 <button data-s="home" onclick="go('home')"><i>🏠</i>الرئيسية</button><button data-s="inv" onclick="go('inv')"><i>🧾</i>الفواتير</button>
 <button data-s="rej" onclick="go('rej')"><i>↩</i>مردود</button><button data-s="stk" onclick="go('stk')"><i>📦</i>المخزن</button>
-<button data-s="acc" onclick="go('acc')"><i>💰</i>الحساب</button><button data-s="del" onclick="go('del')"><i>✅</i>تم التسليم</button></div>
+<button data-s="acc" onclick="go('acc')"><i>💰</i>الحساب</button><button data-s="del" onclick="go('del')"><i>✅</i>تم التسليم</button><button data-s="rep" onclick="go('rep')"><i>🔧</i>صيانة</button></div>
 <script>
 const K='invoices_v2',$=id=>document.getElementById(id);
 const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[newItem()]});
 function newItem(){return{n:'',q:1,p:'',mv:[]}}
 let db=JSON.parse(localStorage.getItem(K)||'null')||{cur:0,list:[blank()]};
-db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];
+db.open=db.open||0;db.rep=db.rep||[];db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];
 const cur=()=>db.list[db.cur],save=(remote)=>{if(!remote)db.ts=Date.now();localStorage.setItem(K,JSON.stringify(db));if(!remote)syncSoon()};
 const num=v=>parseFloat(v)||0,f=n=>(Math.round(n*100)/100).toLocaleString('en-US');
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');
@@ -172,7 +175,7 @@ function drawGlobal(){
 
 
 let scr=localStorage.getItem('scr')||'home',view='list';
-const TT={home:'🧾 متابعة الفواتير',inv:'🧾 الفواتير',rej:'↩ مردود المشتريات',stk:'📦 المخزن',acc:'💰 الحساب',del:'✅ تم التسليم'};
+const TT={home:'🧾 متابعة الفواتير',inv:'🧾 الفواتير',rej:'↩ مردود المشتريات',stk:'📦 المخزن',acc:'💰 الحساب',del:'✅ تم التسليم',rep:'🔧 صيانة'};
 function go(s){scr=s;if(s==='inv')view='list';localStorage.setItem('scr',s);draw();window.scrollTo(0,0)}
 function openInv(i){db.cur=i;view='det';save();draw();window.scrollTo(0,0)}
 function srch(){const q=norm($('q_s').value),o=$('srch');if(!q){o.innerHTML='';return}
@@ -227,14 +230,13 @@ function draw(){const c=cur();
  $('d_cost').textContent=f(dc);$('d_sell').textContent=f(ds);$('d_pf').textContent=f(ds-dc);$('d_pf').className=ds-dc>=0?'pos':'neg';$('d_pct').textContent=(dc?f((ds-dc)/dc*100):0)+'%';
  const byInv={};D.forEach(o=>{(byInv[o.ii]=byInv[o.ii]||[]).push(o)});
  $('dels').innerHTML=D.length?Object.keys(byInv).reverse().map(ii=>`<div class="ihd">${invTitle(db.list[ii])}</div>`+byInv[ii].map(o=>{const cs=num(o.m.q)*num(o.it.p),pf2=num(o.m.amt)-cs;return `<div class="drow"><div class="l"><b>✔ ${esc(o.it.n)}</b><button class="sm" onclick="undoM(${o.ii},${o.i},${o.j})">↩ إلغاء</button></div><div style="font-size:13px">الكمية ${o.m.q} | الأساسي ${f(cs)} | الإجمالي ${f(o.m.amt)} | الربح <span class="${pf2>=0?'pos':'neg'}">${f(pf2)} (${cs?f(pf2/cs*100):0}%)</span></div></div>`}).join('')).join(''):'<div style="color:#778;text-align:center;padding:14px">لسه ما اتسلمش حاجة</div>';
- drawGlobal();
+ drawGlobal();drawRep();
  /* home */
  const pc=db.list.reduce((a,x)=>a+x.items.filter(it=>remain(it)>0&&(it.n||it.p)).length,0),sk=Object.keys(stockGroups()).length;
  $('h1').textContent=db.list.filter(x=>x.items.some(i=>i.n||i.p)).length+' فاتورة | '+pc+' صنف مفتوح';$('h2').textContent=R.length?R.length+' صنف | '+f(rt):'لا يوجد';
- $('h3').textContent=sk+' صنف';$('h5').textContent=D.length?D.length+' عملية | '+f(ds):'لا يوجد';
+ $('h3').textContent=sk+' صنف';$('h6').textContent='تاتش '+db.rep.filter(r=>(r.k||'t')==='t').length+' | زراير '+db.rep.filter(r=>r.k==='b').length;$('h5').textContent=D.length?D.length+' عملية | '+f(ds):'لا يوجد';
  $('h4').textContent='الرصيد '+$('a_bal').textContent;if($('q_s').value)srch()}
 
-draw();
 let IMP=null;
 function impOpen(d){IMP={date:d.date||'',net:d.net,prev:d.prev??null,paid:d.paid??null,bal:d.bal??null,adj:true,items:(d.items||[]).map(x=>({n:x[0],q:x[1],p:x[2]}))};
  $('i_date').value=IMP.date;$('i_prev').value=IMP.prev??'';$('i_paid').value=IMP.paid??'';$('i_bal').value=IMP.bal??'';impDraw();$('imp').classList.add('on')}
@@ -268,10 +270,10 @@ const isEmpty=d=>!d||!d.list||d.list.every(x=>x.items.every(i=>!i.n&&!i.p&&!(i.m
 async function getRemote(){const r=await fetch(SB+'?select=data&code=eq.'+sh,{headers:H()});if(!r.ok)throw new Error(r.status);const a=await r.json();return a[0]?a[0].data:null}
 async function putRemote(){const r=await fetch(SB,{method:'POST',headers:{...H(),Prefer:'resolution=merge-duplicates'},body:JSON.stringify({code:sh,data:db,updated_at:new Date().toISOString()})});if(!r.ok)throw new Error(r.status)}
 function stat(t,ok){lastOk=t;const b=$('cloudbtn');b.textContent=sh?(ok?'☁ ✔':'☁ ⚠'):'☁ مزامنة';if($('syn_st')){$('syn_st').textContent=t;$('syn_st').className=ok?'okm':'warn'}}
-function applyRemote(d){db=d;db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];mig();if(db.cur>=db.list.length)db.cur=0;save(true);draw()}
+function applyRemote(d){db=d;db.rep=db.rep||[];db.open=db.open||0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];mig();if(db.cur>=db.list.length)db.cur=0;save(true);draw()}
 async function syncNow(){if(!sh||busy)return;busy=true;try{const r=await getRemote();
   if(r&&(r.ts||0)>(db.ts||0)){applyRemote(r)}else if(!r||(db.ts||0)>(r.ts||0)){await putRemote()}
-  stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true)}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false}
+  stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true);photoSync()}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false}
 function syncSoon(){if(!sh)return;clearTimeout(syncT);syncT=setTimeout(syncNow,1200)}
 function syncOpen(){$('syn').classList.add('on');$('syn_off').style.display=sh?'none':'block';$('syn_on').style.display=sh?'block':'none';if(sh)stat(lastOk||'المزامنة شغالة',!lastOk.includes('مفيش'))}
 function syncClose(){$('syn').classList.remove('on')}
@@ -283,10 +285,44 @@ async function syncOn(){const c=$('syn_code').value;if(c.length<8)return alert('
   localStorage.setItem('sync_hash',sh);$('syn_code').value='';stat('المزامنة اشتغلت ✔ '+new Date().toLocaleTimeString('en-GB'),true);syncOpen()}
  catch(e){sh=old;alert('مقدرتش أوصل للسحابة. جرب تاني.')}}
 function syncOff(){if(!confirm('توقف المزامنة على الجهاز ده؟ بياناتك هتفضل موجودة على الجهاز وعلى السحابة.'))return;sh=null;localStorage.removeItem('sync_hash');stat('',false);syncOpen()}
-function exportBk(){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(db)],{type:'application/json'}));a.download='invoices-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
-function importBk(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.list)throw 0;if(!confirm('هتستبدل كل البيانات الحالية بالنسخة دي. تكمل؟'))return;db=d;db.cur=0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];db.open=db.open||0;save();draw();alert('تم الاسترجاع')}catch(e){alert('الملف مش نسخة احتياطية سليمة')}inp.value=''};r.readAsText(f)}
+async function exportBk(){const ph=await pAll();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...db,_photos:ph})],{type:'application/json'}));a.download='invoices-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
+function importBk(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!d.list)throw 0;if(!confirm('هتستبدل كل البيانات الحالية بالنسخة دي. تكمل؟'))return;const ph=d._photos||{};delete d._photos;for(const k in ph){await pPut(k,ph[k]);qset('ph_up',[...qget('ph_up'),k])}db=d;db.rep=db.rep||[];db.cur=0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];db.open=db.open||0;save();draw();alert('تم الاسترجاع')}catch(e){alert('الملف مش نسخة احتياطية سليمة')}inp.value=''};r.readAsText(f)}
 if(sh){stat('جاري المزامنة...',true);syncNow()}
 setInterval(()=>{if(sh&&!document.hidden)syncNow()},15000);document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
+
+/* ===== صيانة ===== */
+var repF='all',repK=localStorage.getItem('repK')||'t';const KN={t:'تاتش',b:'زراير'};function repK_(k){repK=k;localStorage.setItem('repK',k);repF='all';draw()}
+const IDBo=()=>new Promise((res,rej)=>{const r=indexedDB.open('inv_photos',1);r.onupgradeneeded=()=>r.result.createObjectStore('p');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)});
+async function pPut(id,v){const d=await IDBo();return new Promise(r=>{const t=d.transaction('p','readwrite');t.objectStore('p').put(v,id);t.oncomplete=r;t.onerror=r})}
+async function pGet(id){const d=await IDBo();return new Promise(r=>{const q=d.transaction('p').objectStore('p').get(id);q.onsuccess=()=>r(q.result);q.onerror=()=>r(null)})}
+async function pDel(id){const d=await IDBo();return new Promise(r=>{const t=d.transaction('p','readwrite');t.objectStore('p').delete(id);t.oncomplete=r;t.onerror=r})}
+async function pAll(){const d=await IDBo();return new Promise(r=>{const o={},q=d.transaction('p').objectStore('p').openCursor();q.onsuccess=()=>{const c=q.result;if(c){o[c.key]=c.value;c.continue()}else r(o)};q.onerror=()=>r(o)})}
+const PH=SB.replace('/store','/photos');
+const qget=k=>JSON.parse(localStorage.getItem(k)||'[]'),qset=(k,v)=>localStorage.setItem(k,JSON.stringify(v));
+async function photoSync(){if(!sh)return;
+ for(const id of qget('ph_up')){const v=await pGet(id);if(!v){qset('ph_up',qget('ph_up').filter(x=>x!==id));continue}
+  try{const r=await fetch(PH,{method:'POST',headers:{...H(),Prefer:'resolution=merge-duplicates'},body:JSON.stringify({code:sh,id,img:v})});if(r.ok)qset('ph_up',qget('ph_up').filter(x=>x!==id))}catch(e){}}
+ for(const id of qget('ph_del')){try{const r=await fetch(PH+'?code=eq.'+sh+'&id=eq.'+id,{method:'DELETE',headers:H()});if(r.ok)qset('ph_del',qget('ph_del').filter(x=>x!==id))}catch(e){}}}
+async function compress(f){const bm=await createImageBitmap(f);const k=Math.min(1,900/Math.max(bm.width,bm.height));const c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.6)}
+async function repAdd(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
+ try{const v=await compress(f),id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);await pPut(id,v);
+  db.rep.unshift({id,ts:Date.now(),note:'',st:'mine',k:repK});qset('ph_up',[...qget('ph_up'),id]);save();draw();photoSync()}
+ catch(e){alert('معرفتش أضيف الصورة')}}
+function repSt(id,st){const r=db.rep.find(x=>x.id===id);if(r){r.st=st;save();draw()}}
+function repNote(id,v){const r=db.rep.find(x=>x.id===id);if(r){r.note=v;save()}}
+async function repDel(id){if(!confirm('تحذف الصورة دي؟'))return;db.rep=db.rep.filter(x=>x.id!==id);await pDel(id);qset('ph_up',qget('ph_up').filter(x=>x!==id));if(sh)qset('ph_del',[...qget('ph_del'),id]);save();draw();photoSync()}
+function repF_(v){repF=v;draw()}
+function repBig(id){pGet(id).then(v=>{if(!v)return;const w=document.createElement('div');w.className='ov on';w.style.cssText+=';display:block;text-align:center';w.innerHTML='<img src="'+v+'" style="max-width:100%;max-height:92vh;border-radius:8px">';w.onclick=()=>w.remove();document.body.appendChild(w)})}
+function drawRep(){const all=db.rep.filter(r=>(r.k||'t')===repK),m=all.filter(r=>r.st==='mine').length,d=all.filter(r=>r.st==='done').length;
+ $('repk').innerHTML=['t','b'].map(k=>{const n=db.rep.filter(r=>(r.k||'t')===k).length;return `<button class="big ${repK===k?'':'g'}" style="flex:1;margin:0;padding:11px" onclick="repK_('${k}')">${KN[k]} (${n})</button>`}).join('');
+ $('repk').style.cssText='display:flex;gap:8px';$('repadd').textContent='📷 إضافة صورة في '+KN[repK];
+ $('repf').innerHTML=[['all','الكل ('+all.length+')'],['mine','لسه عندي ('+m+')'],['done','اتسلمت ('+d+')']].map(([k,t])=>`<button class="chip ${repF===k?'g':''}" style="border:0;padding:8px 14px;font-size:14px" onclick="repF_('${k}')">${t}</button>`).join('');
+ const L=all.filter(r=>repF==='all'||r.st===repF);
+ $('reps').innerHTML=L.length?L.map(r=>`<div class="item ${r.st==='done'?'done':''}" style="${r.st==='mine'?'border-color:#e6c670;background:#fffaf0':''}"><div style="display:flex;gap:10px"><img data-p="${r.id}" onclick="repBig('${r.id}')" style="width:110px;height:110px;object-fit:cover;border-radius:8px;background:#dde;flex:none" alt=""><div style="flex:1"><div style="font-size:12px;color:#667">${new Date(r.ts).toLocaleDateString('en-GB')}</div><input placeholder="ملاحظة قصيرة (اختياري)" value="${esc(r.note)}" onchange="repNote('${r.id}',this.value)" style="margin:4px 0"><div class="chips"><span class="chip ${r.st==='done'?'g':'s'}">${r.st==='done'?'✓ اتسلّمت':'لسه عندي'}</span></div></div></div>
+ <div class="act" style="grid-template-columns:1fr 1fr auto"><button class="bd" onclick="repSt('${r.id}','done')">✓ صح (اتسلّمت)</button><button class="br" onclick="repSt('${r.id}','mine')">✗ غلط (لسه عندي)</button><button class="sm" onclick="repDel('${r.id}')">🗑</button></div></div>`).join(''):'<div style="color:#778;text-align:center;padding:14px">مفيش صور</div>';
+ document.querySelectorAll('img[data-p]').forEach(async im=>{const id=im.dataset.p;let v=await pGet(id);
+  if(!v&&sh){try{const r=await fetch(PH+'?select=img&code=eq.'+sh+'&id=eq.'+id,{headers:H()});const a=await r.json();if(a[0]){v=a[0].img;await pPut(id,v)}}catch(e){}}
+  if(v)im.src=v})}
 
 function photoPick(){if(!sh){alert('فعّل المزامنة الأول (زرار ☁) عشان قراءة الصور تشتغل.');return}$('photoin').click()}
 async function photoGo(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)return;const b=$('photobtn');b.disabled=true;b.textContent='⏳ بقرأ الصورة...';
@@ -297,4 +333,6 @@ async function photoGo(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)r
  impOpen({date:d.date,net:d.net,prev:d.prev,paid:d.paid,bal:d.bal,items:d.items.map(x=>[x.n,x.q,x.p!=null?x.p:(x.t!=null&&x.q?x.t/x.q:'')])});
  }catch(e){alert('معرفتش أقرأ الصورة. جرب صورة أوضح أو تأكد من النت.')}
  b.disabled=false;b.textContent='📷 إضافة فاتورة من صورة'}
+
+draw();
 </script></body></html>
