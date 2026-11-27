@@ -71,11 +71,12 @@ body{padding-bottom:74px}
 <div class="wrap">
 <div class="scr" id="s_home"><div class="tiles">
 <button class="tile t1" onclick="go('inv')"><i>🧾</i>الفواتير<small id="h1"></small></button>
+<button class="tile t6" onclick="go('rep')"><i>🔧</i>صيانة<small id="h6"></small></button>
 <button class="tile t2" onclick="go('rej')"><i>↩</i>مردود المشتريات<small id="h2"></small></button>
 <button class="tile t3" onclick="go('stk')"><i>📦</i>المخزن<small id="h3"></small></button>
 <button class="tile t4" onclick="go('acc')"><i>💰</i>الحساب<small id="h4"></small></button>
 <button class="tile t5" onclick="go('del')"><i>✅</i>تم التسليم<small id="h5"></small></button>
-<button class="tile t6" onclick="go('rep')"><i>🔧</i>صيانة<small id="h6"></small></button></div></div>
+</div></div>
 
 <div class="scr" id="s_inv">
 <div id="inv_list"><input id="q_s" placeholder="🔎 ابحث عن صنف (اسم)" oninput="srch()" style="margin-bottom:8px;font-size:16px;padding:11px"><div id="srch"></div><button class="big" id="photobtn" onclick="photoPick()">📷 إضافة فاتورة من صورة</button><input type="file" id="photoin" accept="image/*" style="display:none" onchange="photoGo(this)">
@@ -123,9 +124,9 @@ body{padding-bottom:74px}
 <div class="chips" id="repf"></div><div id="reps"></div></div>
 </div>
 <div class="nav noprint" id="nav">
-<button data-s="home" onclick="go('home')"><i>🏠</i>الرئيسية</button><button data-s="inv" onclick="go('inv')"><i>🧾</i>الفواتير</button>
+<button data-s="home" onclick="go('home')"><i>🏠</i>الرئيسية</button><button data-s="inv" onclick="go('inv')"><i>🧾</i>الفواتير</button><button data-s="rep" onclick="go('rep')"><i>🔧</i>صيانة</button>
 <button data-s="rej" onclick="go('rej')"><i>↩</i>مردود</button><button data-s="stk" onclick="go('stk')"><i>📦</i>المخزن</button>
-<button data-s="acc" onclick="go('acc')"><i>💰</i>الحساب</button><button data-s="del" onclick="go('del')"><i>✅</i>تم التسليم</button><button data-s="rep" onclick="go('rep')"><i>🔧</i>صيانة</button></div>
+<button data-s="acc" onclick="go('acc')"><i>💰</i>الحساب</button><button data-s="del" onclick="go('del')"><i>✅</i>تم التسليم</button></div>
 <script>
 const K='invoices_v2',$=id=>document.getElementById(id);
 const blank=()=>({no:'',date:new Date().toLocaleDateString('en-GB'),cust:'',code:'',items:[newItem()]});
