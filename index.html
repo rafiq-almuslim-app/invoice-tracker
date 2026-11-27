@@ -327,7 +327,11 @@ async function syncNow(){if(!sh)return;if(busy){again=true;return}busy=true;try{
   stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true);photoSync()}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false;if(again){again=false;setTimeout(syncNow,300)}}
 function syncSoon(){if(!sh)return;rtSend();clearTimeout(syncT);syncT=setTimeout(syncNow,250)}
 const DN=()=>localStorage.getItem('devname')||'';
-function pushCfg(){try{if(window.Android&&Android.cfg)Android.cfg(sh||'',DN())}catch(e){}}
+const FCM_URL='https://script.google.com/macros/s/AKfycbyANfFas-UuFIpUNraeMFvTKm6L-P_-rwZGro5DVJxY2lEgkb3sD25bHrB2ODrECrwF0g/exec',FCM_S='0c5563e60ce9345b4cba8160ce29ee90';
+async function sha(x){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(x));return [...new Uint8Array(b)].map(v=>v.toString(16).padStart(2,'0')).join('')}
+async function fcmTopics(){if(!sh)return null;try{const tp='s_'+(await sha('fcm:'+sh)).slice(0,32);const n=DN();return{tp,me:n?'n_'+(await sha(tp+n)).slice(0,16):''}}catch(e){return null}}
+function pushCfg(){try{if(window.Android&&Android.cfg)fcmTopics().then(t=>Android.cfg(sh||'',DN(),t?t.tp:'',t?t.me:''))}catch(e){}}
+function fcmSend(title,body){try{fcmTopics().then(t=>{if(!t)return;fetch(FCM_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify({s:FCM_S,t:title,b:body,tp:t.tp,x:t.me})}).catch(()=>{})})}catch(e){}}
 function setDev(v){localStorage.setItem('devname',v.trim());pushCfg()}
 function toast(t){let b=document.getElementById('toast');if(!b){b=document.createElement('div');b.id='toast';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#1a3a5c;color:#fff;padding:14px;font-size:16px;font-weight:bold;text-align:center;box-shadow:0 2px 10px #0006;transition:transform .25s;transform:translateY(-120%)';b.onclick=()=>b.style.transform='translateY(-120%)';document.body.appendChild(b)}
  b.textContent=t;b.style.transform='translateY(0)';try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}clearTimeout(b._t);b._t=setTimeout(()=>b.style.transform='translateY(-120%)',7000)}
@@ -380,9 +384,9 @@ async function photoSync(){if(!sh)return;
 async function compress(f){const bm=await createImageBitmap(f);const k=Math.min(1,900/Math.max(bm.width,bm.height));const c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.6)}
 async function repAdd(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
  try{const v=await compress(f),id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);await pPut(id,v);
-  db.rep.unshift({id,ts:Date.now(),note:'',st:'mine',k:repK,by:DN()});qset('ph_up',[...qget('ph_up'),id]);save();draw();photoSync()}
+  db.rep.unshift({id,ts:Date.now(),note:'',st:'mine',k:repK,by:DN()});qset('ph_up',[...qget('ph_up'),id]);save();draw();photoSync();fcmSend('📥 استلام جهاز ('+(repK==='b'?'زراير':'تاتش')+')',DN()?'بواسطة '+DN():'جهاز جديد')}
  catch(e){alert('معرفتش أضيف الصورة')}}
-function repSt(id,st){const r=db.rep.find(x=>x.id===id);if(r&&r.st!==st){r.st=st;r.sby=DN();r.sts=Date.now();save();draw()}}
+function repSt(id,st){const r=db.rep.find(x=>x.id===id);if(r&&r.st!==st){r.st=st;r.sby=DN();r.sts=Date.now();save();draw();fcmSend((st==='done'?'✅ تسليم جهاز (':'↩ رجع جهاز عندنا (')+(r.k==='b'?'زراير':'تاتش')+')',(DN()?'بواسطة '+DN():'')+(r.note?(DN()?' - ':'')+r.note:''))}}
 function repNote(id,v){const r=db.rep.find(x=>x.id===id);if(r){r.note=v;save()}}
 async function repDel(id){if(!confirm('تحذف الصورة دي؟'))return;db.rep=db.rep.filter(x=>x.id!==id);await pDel(id);qset('ph_up',qget('ph_up').filter(x=>x!==id));if(sh)qset('ph_del',[...qget('ph_del'),id]);save();draw();photoSync()}
 function repF_(v){repF=v;draw()}
