@@ -321,11 +321,25 @@ function applyRemote(d){db=d;db.rep=db.rep||[];db.open=db.open||0;db.pay=db.pay|
 let again=false;
 async function syncNow(){if(!sh)return;if(busy){again=true;return}busy=true;try{const r=await getRemote();
   mig();stamp(db,true);
-  if(!r){await putRemote()}else{const rr=stamp(r,false),m=mergeDb(db,rr),c=canon(m);
+  if(!r){await putRemote();rtPing()}else{const rr=stamp(r,false),m=mergeDb(db,rr),c=canon(m);
    if(c!==canon(db)){db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw()}
-   if(c!==canon(r)){await putRemote()}}
+   if(c!==canon(r)){await putRemote();rtPing()}}
   stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true);photoSync()}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false;if(again){again=false;setTimeout(syncNow,300)}}
-function syncSoon(){if(!sh)return;clearTimeout(syncT);syncT=setTimeout(syncNow,1200)}
+function syncSoon(){if(!sh)return;rtSend();clearTimeout(syncT);syncT=setTimeout(syncNow,250)}
+/* near-realtime: tiny "changed" ping over Supabase Realtime broadcast (no data inside), then pull */
+let ws=null,wsJoined=false,wsHB=null;
+function rtConnect(){if(!sh||ws)return;let w;try{w=new WebSocket('wss://upksnnhqvhisrjbbjfal.supabase.co/realtime/v1/websocket?apikey='+SK+'&vsn=1.0.0')}catch(e){return}
+ ws=w;const topic='realtime:inv-'+sh,send=(t,e,p)=>{try{w.send(JSON.stringify({topic:t,event:e,payload:p,ref:String(Date.now()%1e9)}))}catch(x){}};
+ w.onopen=()=>{send(topic,'phx_join',{config:{broadcast:{ack:false,self:false},presence:{key:''},postgres_changes:[],private:false}});wsHB=setInterval(()=>send('phoenix','heartbeat',{}),25000)};
+ w.onmessage=ev=>{let m;try{m=JSON.parse(ev.data)}catch(e){return}
+  if(m.event==='phx_reply'&&m.topic===topic&&m.payload&&m.payload.status==='ok'){wsJoined=true;syncNow()}
+  else if(m.event==='broadcast'&&m.topic===topic){const p=m.payload&&m.payload.payload;if(m.payload&&m.payload.event==='db'&&p&&p.d)rtApply(p.d);else syncNow()}};
+ w.onclose=w.onerror=()=>{if(ws!==w)return;clearInterval(wsHB);ws=null;wsJoined=false;setTimeout(rtConnect,3000)};
+ w.rtsend=()=>send(topic,'broadcast',{type:'broadcast',event:'chg',payload:{}})}
+function rtSend(){if(!(ws&&wsJoined&&ws.readyState===1))return;try{const j=JSON.stringify(db);if(j.length<180000)ws.send(JSON.stringify({topic:'realtime:inv-'+sh,event:'broadcast',payload:{type:'broadcast',event:'db',payload:{d:db}},ref:String(Date.now()%1e9)}));else ws.rtsend()}catch(e){}}
+function rtApply(r){try{if(!r||!r.list)return;mig();stamp(db,true);const m=mergeDb(db,stamp(r,false));if(canon(m)!==canon(db)){db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw();clearTimeout(syncT);syncT=setTimeout(syncNow,600)}}catch(e){syncNow()}}
+function rtPing(){if(ws&&wsJoined&&ws.readyState===1)ws.rtsend()}
+function rtClose(){const w=ws;ws=null;wsJoined=false;clearInterval(wsHB);try{w&&w.close()}catch(e){}}
 function syncOpen(){$('syn').classList.add('on');$('syn_off').style.display=sh?'none':'block';$('syn_on').style.display=sh?'block':'none';if(sh)stat(lastOk||'المزامنة شغالة',!lastOk.includes('مفيش'))}
 function syncClose(){$('syn').classList.remove('on')}
 async function syncOn(){const c=$('syn_code').value;if(c.length<8)return alert('الكود لازم 8 حروف أو أرقام على الأقل');
@@ -333,13 +347,13 @@ async function syncOn(){const c=$('syn_code').value;if(c.length<8)return alert('
  try{const r=await getRemote();
   if(r){if(isEmpty(db)){applyRemote(r)}else{mig();stamp(db,true);const m=mergeDb(db,stamp(r,false));db=m;mig();save(true);draw();await putRemote()}}
   else{if(isEmpty(db)&&!confirm('الكود ده جديد ومفيش عليه بيانات. لو ده جهاز تاني وكتبت الكود غلط، اضغط إلغاء وراجع الكود. أول مرة فعلاً؟')){sh=old;return}await putRemote()}
-  localStorage.setItem('sync_hash',sh);$('syn_code').value='';stat('المزامنة اشتغلت ✔ '+new Date().toLocaleTimeString('en-GB'),true);syncOpen()}
+  localStorage.setItem('sync_hash',sh);rtConnect();$('syn_code').value='';stat('المزامنة اشتغلت ✔ '+new Date().toLocaleTimeString('en-GB'),true);syncOpen()}
  catch(e){sh=old;alert('مقدرتش أوصل للسحابة. جرب تاني.')}}
-function syncOff(){if(!confirm('توقف المزامنة على الجهاز ده؟ بياناتك هتفضل موجودة على الجهاز وعلى السحابة.'))return;sh=null;localStorage.removeItem('sync_hash');stat('',false);syncOpen()}
+function syncOff(){if(!confirm('توقف المزامنة على الجهاز ده؟ بياناتك هتفضل موجودة على الجهاز وعلى السحابة.'))return;sh=null;rtClose();localStorage.removeItem('sync_hash');stat('',false);syncOpen()}
 async function exportBk(){const ph=await pAll();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...db,_photos:ph})],{type:'application/json'}));a.download='invoices-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 function importBk(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!d.list)throw 0;if(!confirm('هتستبدل كل البيانات الحالية بالنسخة دي. تكمل؟'))return;const ph=d._photos||{};delete d._photos;for(const k in ph){await pPut(k,ph[k]);qset('ph_up',[...qget('ph_up'),k])}db=d;db.rep=db.rep||[];db.cur=0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];db.open=db.open||0;save();draw();alert('تم الاسترجاع')}catch(e){alert('الملف مش نسخة احتياطية سليمة')}inp.value=''};r.readAsText(f)}
-if(sh){stat('جاري المزامنة...',true);syncNow()}
-setInterval(()=>{if(sh&&!document.hidden)syncNow()},15000);window.addEventListener('online',()=>{if(sh)syncNow()});window.addEventListener('focus',()=>{if(sh)syncNow()});document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
+if(sh){stat('جاري المزامنة...',true);syncNow();rtConnect()}
+setInterval(()=>{if(sh&&!document.hidden){syncNow();rtConnect()}},5000);window.addEventListener('online',()=>{if(sh)syncNow()});window.addEventListener('focus',()=>{if(sh)syncNow()});document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
 
 /* ===== صيانة ===== */
 var repF='all',repK=localStorage.getItem('repK')||'t';const KN={t:'تاتش',b:'زراير'};function repK_(k){repK=k;localStorage.setItem('repK',k);repF='all';draw()}
