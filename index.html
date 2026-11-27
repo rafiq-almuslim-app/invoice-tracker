@@ -120,7 +120,7 @@ body{padding-bottom:74px}
 <div class="scr" id="s_del"><div class="box"><h3>✅ تم التسليم</h3><div class="sum">
 <div class="card">المبلغ الأساسي<b id="d_cost"></b></div><div class="card">الإجمالي (بعد الربح)<b id="d_sell"></b></div>
 <div class="card">الربح<b id="d_pf"></b></div><div class="card">نسبة الربح %<b id="d_pct"></b></div></div></div><div id="dels"></div></div>
-<div class="scr" id="s_rep"><div class="chips" id="repk" style="margin-bottom:8px"></div><button class="big" id="repadd" onclick="$('repin').click()">📷 إضافة صورة</button><input type="file" id="repin" accept="image/*" style="display:none" onchange="repAdd(this)">
+<div class="scr" id="s_rep"><input id="devn" placeholder="اسمك (بيظهر في إشعارات باقي الفنيين)" onchange="setDev(this.value)" style="margin-bottom:8px"><div class="chips" id="repk" style="margin-bottom:8px"></div><button class="big" id="repadd" onclick="$('repin').click()">📷 إضافة صورة</button><input type="file" id="repin" accept="image/*" style="display:none" onchange="repAdd(this)">
 <div class="chips" id="repf"></div><div id="reps"></div></div>
 </div>
 <div class="nav noprint" id="nav">
@@ -293,7 +293,7 @@ function mergeDb(a,b){
  const mvm=(x,y)=>{const w={...pick(x,y)};if(x.done||y.done)w.done=true;return w};
  const itm=(x,y)=>{const w={...pick(x,y)};w.mv=byU(x.mv,y.mv,'u',mvm);return w};
  const inv=(x,y)=>{const w={...pick(x,y)};w.items=byU(x.items,y.items,'u',itm);return w};
- const repm=(x,y)=>{const w={...pick(x,y)};const ys=(y.smt||0)>(x.smt||0),yn=(y.nmt||0)>(x.nmt||0);w.st=ys?y.st:x.st;w.smt=ys?y.smt:x.smt;w._s=w.st;w.note=yn?y.note:x.note;w.nmt=yn?y.nmt:x.nmt;w._n=w.note;return w};
+ const repm=(x,y)=>{const w={...pick(x,y)};const ys=(y.smt||0)>(x.smt||0),yn=(y.nmt||0)>(x.nmt||0);w.st=ys?y.st:x.st;if(ys){w.sby=y.sby;w.sts=y.sts}else{w.sby=x.sby;w.sts=x.sts};w.smt=ys?y.smt:x.smt;w._s=w.st;w.note=yn?y.note:x.note;w.nmt=yn?y.nmt:x.nmt;w._n=w.note;return w};
  const curU=(a.list[a.cur]||{}).u;
  let list=byU(a.list,b.list,'u',inv);
  if(list.length>1)list=list.filter(v=>!blankInv(v));
@@ -322,10 +322,18 @@ let again=false;
 async function syncNow(){if(!sh)return;if(busy){again=true;return}busy=true;try{const r=await getRemote();
   mig();stamp(db,true);
   if(!r){await putRemote();rtPing()}else{const rr=stamp(r,false),m=mergeDb(db,rr),c=canon(m);
-   if(c!==canon(db)){db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw()}
+   if(c!==canon(db)){const old=db.rep;db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw();repEvents(old,db.rep)}
    if(c!==canon(r)){await putRemote();rtPing()}}
   stat('متزامن ✔ '+new Date().toLocaleTimeString('en-GB'),true);photoSync()}catch(e){stat('مفيش اتصال أو مشكلة في المزامنة، هيحاول تاني',false)}busy=false;if(again){again=false;setTimeout(syncNow,300)}}
 function syncSoon(){if(!sh)return;rtSend();clearTimeout(syncT);syncT=setTimeout(syncNow,250)}
+const DN=()=>localStorage.getItem('devname')||'';
+function pushCfg(){try{if(window.Android&&Android.cfg)Android.cfg(sh||'',DN())}catch(e){}}
+function setDev(v){localStorage.setItem('devname',v.trim());pushCfg()}
+function toast(t){let b=document.getElementById('toast');if(!b){b=document.createElement('div');b.id='toast';b.style.cssText='position:fixed;top:0;left:0;right:0;z-index:99;background:#1a3a5c;color:#fff;padding:14px;font-size:16px;font-weight:bold;text-align:center;box-shadow:0 2px 10px #0006;transition:transform .25s;transform:translateY(-120%)';b.onclick=()=>b.style.transform='translateY(-120%)';document.body.appendChild(b)}
+ b.textContent=t;b.style.transform='translateY(0)';try{navigator.vibrate&&navigator.vibrate([200,100,200])}catch(e){}clearTimeout(b._t);b._t=setTimeout(()=>b.style.transform='translateY(-120%)',7000)}
+function repEvents(old,nw){(nw||[]).forEach(r=>{const o=(old||[]).find(x=>x.id===r.id),kk=(r.k==='b'?'زراير':'تاتش');
+ if(!o)toast('📥 استلام جهاز ('+kk+')'+(r.by?' بواسطة '+r.by:'')+(r.note?': '+r.note:''));
+ else if(o.st!==r.st)toast((r.st==='done'?'✅ تسليم جهاز (':'↩ رجع جهاز عندنا (')+kk+')'+(r.sby?' بواسطة '+r.sby:'')+(r.note?': '+r.note:''))})}
 /* near-realtime: tiny "changed" ping over Supabase Realtime broadcast (no data inside), then pull */
 let ws=null,wsJoined=false,wsHB=null;
 function rtConnect(){if(!sh||ws)return;let w;try{w=new WebSocket('wss://upksnnhqvhisrjbbjfal.supabase.co/realtime/v1/websocket?apikey='+SK+'&vsn=1.0.0')}catch(e){return}
@@ -337,7 +345,7 @@ function rtConnect(){if(!sh||ws)return;let w;try{w=new WebSocket('wss://upksnnhq
  w.onclose=w.onerror=()=>{if(ws!==w)return;clearInterval(wsHB);ws=null;wsJoined=false;setTimeout(rtConnect,3000)};
  w.rtsend=()=>send(topic,'broadcast',{type:'broadcast',event:'chg',payload:{}})}
 function rtSend(){if(!(ws&&wsJoined&&ws.readyState===1))return;try{const j=JSON.stringify(db);if(j.length<180000)ws.send(JSON.stringify({topic:'realtime:inv-'+sh,event:'broadcast',payload:{type:'broadcast',event:'db',payload:{d:db}},ref:String(Date.now()%1e9)}));else ws.rtsend()}catch(e){}}
-function rtApply(r){try{if(!r||!r.list)return;mig();stamp(db,true);const m=mergeDb(db,stamp(r,false));if(canon(m)!==canon(db)){db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw();clearTimeout(syncT);syncT=setTimeout(syncNow,600)}}catch(e){syncNow()}}
+function rtApply(r){try{if(!r||!r.list)return;mig();stamp(db,true);const m=mergeDb(db,stamp(r,false));if(canon(m)!==canon(db)){const old=db.rep;db=m;mig();localStorage.setItem('prevU',JSON.stringify(uidsOf(db)));save(true);draw();repEvents(old,db.rep);clearTimeout(syncT);syncT=setTimeout(syncNow,600)}}catch(e){syncNow()}}
 function rtPing(){if(ws&&wsJoined&&ws.readyState===1)ws.rtsend()}
 function rtClose(){const w=ws;ws=null;wsJoined=false;clearInterval(wsHB);try{w&&w.close()}catch(e){}}
 function syncOpen(){$('syn').classList.add('on');$('syn_off').style.display=sh?'none':'block';$('syn_on').style.display=sh?'block':'none';if(sh)stat(lastOk||'المزامنة شغالة',!lastOk.includes('مفيش'))}
@@ -347,12 +355,13 @@ async function syncOn(){const c=$('syn_code').value;if(c.length<8)return alert('
  try{const r=await getRemote();
   if(r){if(isEmpty(db)){applyRemote(r)}else{mig();stamp(db,true);const m=mergeDb(db,stamp(r,false));db=m;mig();save(true);draw();await putRemote()}}
   else{if(isEmpty(db)&&!confirm('الكود ده جديد ومفيش عليه بيانات. لو ده جهاز تاني وكتبت الكود غلط، اضغط إلغاء وراجع الكود. أول مرة فعلاً؟')){sh=old;return}await putRemote()}
-  localStorage.setItem('sync_hash',sh);rtConnect();$('syn_code').value='';stat('المزامنة اشتغلت ✔ '+new Date().toLocaleTimeString('en-GB'),true);syncOpen()}
+  localStorage.setItem('sync_hash',sh);rtConnect();pushCfg();$('syn_code').value='';stat('المزامنة اشتغلت ✔ '+new Date().toLocaleTimeString('en-GB'),true);syncOpen()}
  catch(e){sh=old;alert('مقدرتش أوصل للسحابة. جرب تاني.')}}
-function syncOff(){if(!confirm('توقف المزامنة على الجهاز ده؟ بياناتك هتفضل موجودة على الجهاز وعلى السحابة.'))return;sh=null;rtClose();localStorage.removeItem('sync_hash');stat('',false);syncOpen()}
+function syncOff(){if(!confirm('توقف المزامنة على الجهاز ده؟ بياناتك هتفضل موجودة على الجهاز وعلى السحابة.'))return;sh=null;rtClose();localStorage.removeItem('sync_hash');pushCfg();stat('',false);syncOpen()}
 async function exportBk(){const ph=await pAll();const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify({...db,_photos:ph})],{type:'application/json'}));a.download='invoices-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click()}
 function importBk(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=async()=>{try{const d=JSON.parse(r.result);if(!d.list)throw 0;if(!confirm('هتستبدل كل البيانات الحالية بالنسخة دي. تكمل؟'))return;const ph=d._photos||{};delete d._photos;for(const k in ph){await pPut(k,ph[k]);qset('ph_up',[...qget('ph_up'),k])}db=d;db.rep=db.rep||[];db.cur=0;db.pay=db.pay||[];db.alias=db.alias||{};db.no=db.no||[];db.open=db.open||0;save();draw();alert('تم الاسترجاع')}catch(e){alert('الملف مش نسخة احتياطية سليمة')}inp.value=''};r.readAsText(f)}
 if(sh){stat('جاري المزامنة...',true);syncNow();rtConnect()}
+pushCfg();if($('devn'))$('devn').value=DN();
 setInterval(()=>{if(sh&&!document.hidden){syncNow();rtConnect()}},5000);window.addEventListener('online',()=>{if(sh)syncNow()});window.addEventListener('focus',()=>{if(sh)syncNow()});document.addEventListener('visibilitychange',()=>{if(sh&&!document.hidden)syncNow()});
 
 /* ===== صيانة ===== */
@@ -371,9 +380,9 @@ async function photoSync(){if(!sh)return;
 async function compress(f){const bm=await createImageBitmap(f);const k=Math.min(1,900/Math.max(bm.width,bm.height));const c=document.createElement('canvas');c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext('2d').drawImage(bm,0,0,c.width,c.height);return c.toDataURL('image/jpeg',0.6)}
 async function repAdd(inp){const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
  try{const v=await compress(f),id='r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);await pPut(id,v);
-  db.rep.unshift({id,ts:Date.now(),note:'',st:'mine',k:repK});qset('ph_up',[...qget('ph_up'),id]);save();draw();photoSync()}
+  db.rep.unshift({id,ts:Date.now(),note:'',st:'mine',k:repK,by:DN()});qset('ph_up',[...qget('ph_up'),id]);save();draw();photoSync()}
  catch(e){alert('معرفتش أضيف الصورة')}}
-function repSt(id,st){const r=db.rep.find(x=>x.id===id);if(r){r.st=st;save();draw()}}
+function repSt(id,st){const r=db.rep.find(x=>x.id===id);if(r&&r.st!==st){r.st=st;r.sby=DN();r.sts=Date.now();save();draw()}}
 function repNote(id,v){const r=db.rep.find(x=>x.id===id);if(r){r.note=v;save()}}
 async function repDel(id){if(!confirm('تحذف الصورة دي؟'))return;db.rep=db.rep.filter(x=>x.id!==id);await pDel(id);qset('ph_up',qget('ph_up').filter(x=>x!==id));if(sh)qset('ph_del',[...qget('ph_del'),id]);save();draw();photoSync()}
 function repF_(v){repF=v;draw()}
